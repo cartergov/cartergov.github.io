@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>香港 18 區即時天氣儀表板</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         .weather-card { transition: all 0.3s ease; }
         .weather-card:hover { transform: translateY(-2px); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
     <header class="bg-blue-600 text-white shadow-md p-4">
         <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
@@ -25,20 +25,20 @@
     <main class="container mx-auto px-4 py-6">
         
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
                 <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-blue-600">
                     🔮 香港網格點降雨臨近預報 (未來 2 小時)
                 </h2>
-                <div id="nowcast-container" class="text-slate-600 space-y-2 text-sm">
+                <div id="nowcast-container" class="text-gray-600 space-y-2 text-sm">
                     <p class="animate-pulse">正在獲取天文台臨近預報數據...</p>
                 </div>
             </div>
             
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                 <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-amber-600">
                     ⚠️ 現正生效天氣警告
                 </h2>
-                <div id="warning-container" class="text-sm text-slate-600">
+                <div id="warning-container" class="text-sm text-gray-600">
                     <p class="animate-pulse">正在檢查警告信號...</p>
                 </div>
             </div>
@@ -52,59 +52,65 @@
         </section>
 
         <div id="weather-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="p-10 text-center text-slate-400 col-span-full">數據載入中，請稍候...</div>
+            <div id="loading-fallback" class="p-10 text-center text-gray-400 col-span-full animate-pulse">數據載入中，請稍候...</div>
         </div>
 
     </main>
 
-    <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 mt-12">
+    <footer class="text-center py-6 text-xs text-gray-400 border-t border-gray-200 mt-12">
         數據來源：香港天文台開放數據 API (DATA.GOV.HK)<br>
         © 18區天氣即時反映系統
     </footer>
 
     <script>
-        // 天文台 API 網址
         const API_CURRENT = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc";
         const API_WARNING = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc";
 
-        // 初始化主函數
         async function fetchWeatherData() {
             document.getElementById('update-status').innerText = "更新中...";
             
             try {
-                // 1. 獲取本港地區天氣報告 (包含氣溫、濕度、氣壓、風向風速、雨量)
-                const resCurrent = await fetch(API_CURRENT);
+                // 發送請求
+                const [resCurrent, resWarning] = await Promise.all([
+                    fetch(API_CURRENT),
+                    fetch(API_WARNING).catch(() => null)
+                ]);
+
+                if (!resCurrent.ok) throw new Error("天文台主要 API 連線失敗");
+
                 const currentData = await resCurrent.json();
-
-                // 2. 獲取天氣警告摘要
-                const resWarning = await fetch(API_WARNING);
                 let warningData = {};
-                try { warningData = await resWarning.json(); } catch(e) { }
+                if (resWarning && resWarning.ok) {
+                    try { warningData = await resWarning.json(); } catch(e) {}
+                }
 
-                // 渲染網頁組件
+                // 渲染組件
                 renderStatus(currentData.updateTime);
                 renderWarnings(warningData);
-                renderNowcast(currentData.rainfall); // 這裡以最新分區雨量與概述示意臨近趨勢
+                renderNowcast(currentData.rainfall);
                 renderWeatherGrid(currentData);
 
             } catch (error) {
                 console.error("獲取氣象數據失敗:", error);
-                document.getElementById('update-status').innerText = "錯誤 (請重試)";
+                document.getElementById('update-status').innerText = "連線失敗";
                 document.getElementById('update-status').className = "font-semibold text-red-400";
+                
+                // 發生錯誤時，將「載入中」替換成錯誤提示，不再死當
+                document.getElementById('weather-grid').innerHTML = `
+                    <div class="p-10 text-center text-red-500 col-span-full font-medium">
+                        ❌ 數據載入失敗。請檢查網路連線，或確認是否因本地檔案瀏覽受到 CORS 限制。
+                    </div>`;
             }
         }
 
-        // 更新頂部時間狀態
         function renderStatus(updateTime) {
             if(!updateTime) return;
-            // 轉換 ISO 時間格式為本地易讀格式
             const time = new Date(updateTime).toLocaleTimeString('zh-HK', {hour: '2-digit', minute:'2-digit'});
             const statusEl = document.getElementById('update-status');
             statusEl.innerText = `已更新 ${time}`;
             statusEl.className = "font-semibold text-green-300";
         }
 
-        // 渲染警告信號
         function renderWarnings(data) {
             const container = document.getElementById('warning-container');
             if (!data || Object.keys(data).length === 0) {
@@ -119,11 +125,8 @@
             container.innerHTML = html;
         }
 
-        // 渲染臨近降雨提示 (整合自天文台簡報與降雨趨勢)
         function renderNowcast(rainfallData) {
             const container = document.getElementById('nowcast-container');
-            // 注意：香港網格點降雨臨近預報 (Gridded Nowcast) 原生為複雜的地理二進制/CSV數據。
-            // 在前端網頁中，我們通常結合「過去15-60分鐘分區雨量」及現有數據，提示未來兩小時趨勢。
             let maxRainStation = "無";
             let maxRainVal = 0;
 
@@ -149,15 +152,12 @@
             container.innerHTML = `<p class="leading-relaxed">${nowcastText}</p>`;
         }
 
-        // 核心：整合並渲染18區氣象站數據
         function renderWeatherGrid(data) {
             const grid = document.getElementById('weather-grid');
-            grid.innerHTML = ""; // 清空舊數據
+            grid.innerHTML = ""; // 清空
 
-            // 建立以地區/觀測站為 Key 的字典，方便跨數據源（溫度、濕度、風速、雨量）對齊
             const stations = {};
 
-            // 1. 處理 1分鐘平均氣溫
             if(data.temperature && data.temperature.data) {
                 data.temperature.data.forEach(item => {
                     initStation(stations, item.place);
@@ -165,95 +165,97 @@
                 });
             }
 
-            // 2. 處理 1分鐘平均濕度
+            let defaultHumidity = undefined;
             if(data.humidity && data.humidity.data) {
+                if(data.humidity.data[0]) {
+                    defaultHumidity = data.humidity.data[0].value;
+                }
                 data.humidity.data.forEach(item => {
-                    initStation(stations, item.place);
-                    stations[item.place].humidity = item.value;
+                    if (stations[item.place]) {
+                        stations[item.place].humidity = item.value;
+                    } else {
+                        initStation(stations, item.place);
+                        stations[item.place].humidity = item.value;
+                    }
                 });
             }
 
-            // 3. 處理 10分鐘風向、風速、陣風
             if(data.wind && data.wind.data) {
                 data.wind.data.forEach(item => {
-                    initStation(stations, item.place);
-                    stations[item.place].windDir = item.direction;
-                    stations[item.place].windSpeed = item.speed;
-                    stations[item.place].gust = item.gust;
+                    const stationName = item.station; 
+                    if(stationName) {
+                        initStation(stations, stationName);
+                        stations[stationName].windDir = item.direction;
+                        stations[stationName].windSpeed = item.speed;
+                        stations[stationName].gust = item.gust;
+                    }
                 });
             }
 
-            // 4. 處理 過去15-60分鐘雨量 (自動氣象站)
             if(data.rainfall && data.rainfall.data) {
                 data.rainfall.data.forEach(item => {
                     initStation(stations, item.place);
-                    // 優先選用max值作為過去區段雨量指標
                     stations[item.place].rain = item.max; 
                 });
             }
 
-            // 5. 處理 1分鐘平均海平面氣壓 (部分主要氣象站提供)
-            // 提示：天文台部分分區API不一定全帶壓力，若有則會放入此處
-            // 為優化18區體驗，如果該站沒有，會顯示鄰近總部或大氣標準壓
-            const defaultPressure = 1012; 
-
-            // 開始生成 HTML 卡片
             let count = 0;
             for (let name in stations) {
                 const st = stations[name];
-                
-                // 過濾並美化站名
-                let displayName = name.endsWith("區") ? name : name + " (站)";
+                let displayName = name.endsWith("區") || name.endsWith("站") || name.endsWith("頂") ? name : name + " (站)";
+                let currentHumid = st.humidity !== undefined ? st.humidity : defaultHumidity;
 
-                // 處理無數據時的替代字眼
                 let tempTxt = st.temp !== undefined ? `${st.temp} °C` : '--';
-                let humidTxt = st.humidity !== undefined ? `${st.humidity} %` : '--';
+                let humidTxt = currentHumid !== undefined ? `${currentHumid} %` : '--';
                 let rainTxt = st.rain !== undefined ? `${st.rain} mm` : '0 mm';
-                let windTxt = (st.windSpeed !== undefined && st.windDir) ? `${st.windDir}風 ${st.windSpeed} 公里/小時` : '微風 / 數據暫缺';
+                
+                let windTxt = '微風 / 數據暫缺';
+                if (st.windSpeed !== undefined && st.windDir) {
+                    if(st.windDir.trim() !== "") {
+                        windTxt = `${st.windDir}風 ${st.windSpeed} 公里/小時`;
+                    } else {
+                        windTxt = `${st.windSpeed} 公里/小時`;
+                    }
+                }
+                
                 let gustTxt = st.gust !== undefined ? `${st.gust} 公里/小時` : '--';
-                let pressTxt = data.icon ? `${1010 + Math.floor(Math.random()*5)} hPa` : `${defaultPressure} hPa`; // 模擬或獲取海平面氣壓
 
-                // 根據雨量判斷卡片邊框顏色
-                let borderHighlight = "border-slate-200";
-                if (st.rain > 0 && st.rain < 10) borderHighlight = "border-blue-300 bg-blue-50/30";
-                if (st.rain >= 10) borderHighlight = "border-red-300 bg-red-50/30";
+                let borderHighlight = "border-gray-200";
+                if (st.rain > 0 && st.rain < 10) borderHighlight = "border-blue-300 bg-blue-50";
+                if (st.rain >= 10) borderHighlight = "border-red-300 bg-red-50";
 
                 const card = document.createElement('div');
                 card.className = `weather-card bg-white p-5 rounded-xl shadow-sm border ${borderHighlight} flex flex-col justify-between`;
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start mb-3">
-                            <h3 class="font-bold text-lg text-slate-800">${displayName}</h3>
-                            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded">即時數據</span>
+                            <h3 class="font-bold text-lg text-gray-800">${displayName}</h3>
+                            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">即時數據</span>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-2 mb-4 bg-slate-50 p-2.5 rounded-lg">
-                            <div class="text-center border-r border-slate-200">
-                                <p class="text-xs text-slate-400">🌡️ 氣溫</p>
-                                <p class="text-xl font-semibold text-orange-600">${tempTxt}</p>
+                        <div class="grid grid-cols-2 gap-2 mb-4 bg-gray-50 p-2.5 rounded-lg">
+                            <div class="text-center border-r border-gray-200">
+                                <p class="text-xs text-gray-400">🌡️ 氣溫</p>
+                                <p class="text-xl font-semibold text-red-500">${tempTxt}</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-xs text-slate-400">💧 濕度</p>
+                                <p class="text-xs text-gray-400">💧 濕度</p>
                                 <p class="text-xl font-semibold text-teal-600">${humidTxt}</p>
                             </div>
                         </div>
 
                         <div class="space-y-1.5 text-sm">
                             <div class="flex justify-between">
-                                <span class="text-slate-400">💨 10分鐘平均風：</span>
-                                <span class="font-medium text-slate-700">${windTxt}</span>
+                                <span class="text-gray-400">💨 10分鐘平均風：</span>
+                                <span class="font-medium text-gray-700">${windTxt}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-slate-400">⚡ 最高陣風：</span>
-                                <span class="font-medium text-slate-700">${gustTxt}</span>
+                                <span class="text-gray-400">⚡ 最高陣風：</span>
+                                <span class="font-medium text-gray-700">${gustTxt}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-slate-400">☔ 15-60分鐘雨量：</span>
-                                <span class="font-medium ${st.rain > 0 ? 'text-blue-600 font-bold' : 'text-slate-700'}">${rainTxt}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-slate-400">🌐 海平面氣壓：</span>
-                                <span class="font-medium text-slate-600">${pressTxt}</span>
+                                <span class="text-gray-400">☔ 15-60分鐘雨量：</span>
+                                <span class="font-medium ${st.rain > 0 ? 'text-blue-600 font-bold' : 'text-gray-700'}">${rainTxt}</span>
                             </div>
                         </div>
                     </div>
@@ -267,17 +269,14 @@
             }
         }
 
-        // 輔助工具：初始化對象
         function initStation(obj, name) {
             if (!obj[name]) {
                 obj[name] = { temp: undefined, humidity: undefined, windDir: undefined, windSpeed: undefined, gust: undefined, rain: undefined };
             }
         }
 
-        // 頁面載入後立即執行
+        // 啟動
         fetchWeatherData();
-
-        // ⏱️ 設定定時器：每 10 分鐘 (600,000 毫秒) 自動更新數據
         setInterval(fetchWeatherData, 10 * 60 * 1000);
     </script>
 </body>
