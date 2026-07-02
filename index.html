@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香港 18 區即時天氣儀表板 (分區整合版)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .district-card { transition: all 0.25s ease; }
+        .district-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md p-4">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <h1 class="text-2xl font-bold tracking-wide">⛈️ 香港 18 區即時天氣儀表板</h1>
+            <div class="text-sm bg-blue-800/50 px-3 py-1.5 rounded-lg border border-blue-400/30 text-center">
+                系統狀態：<span id="update-status" class="font-semibold text-green-300">正在載入...</span><br>
+                <span class="text-xs text-blue-200">每 10 分鐘自動更新</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+        
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
+                <h2 class="text-lg font-bold mb-2 flex items-center gap-2 text-blue-600">
+                    🔮 香港網格點降雨臨近預報 (未來 2 小時)
+                </h2>
+                <div id="nowcast-container" class="text-slate-600 text-sm leading-relaxed">
+                    <p class="animate-pulse">正在獲取天文台臨近預報數據...</p>
+                </div>
+            </div>
+            
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold mb-2 flex items-center gap-2 text-amber-600">
+                    ⚠️ 現正生效天氣警告
+                </h2>
+                <div id="warning-container" class="text-sm text-slate-600">
+                    <p class="animate-pulse">正在檢查警告信號...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-6 flex justify-between items-center">
+            <h2 class="text-xl font-bold border-l-4 border-blue-600 pl-2">香港 18 行政分區天氣摘要</h2>
+            <button onclick="fetchWeatherData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 text-sm rounded-lg shadow-sm transition cursor-pointer">
+                🔄 手動刷新
+            </button>
+        </section>
+
+        <div id="district-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="p-10 text-center text-slate-400 col-span-full">數據整合中，請稍候...</div>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 mt-12">
+        數據來源：香港天文台開放數據 API (DATA.GOV.HK)<br>
+        © 香港 18 區天氣即時反映系統
+    </footer>
+
+    <script>
+        // 天文台 API
+        const API_CURRENT = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc";
+        const API_WARNING = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc";
+
+        // 核心對照表：將天文台的站名/地方名，歸類到香港 18 區
+        const DISTRICT_MAPPING = {
+            "中西區": ["中環", "山頂", "香港公園", "中西區"],
+            "東區": ["北角", "鰂魚涌", "西灣河", "東區"],
+            "南區": ["黃竹坑", "赤柱", "淺水灣", "大潭", "南區", "香港航海學校"],
+            "灣仔區": ["跑馬地", "灣仔", "銅鑼灣"],
+            "油尖旺區": ["香港天文台", "京士柏", "尖沙咀", "旺角"],
+            "深水埗區": ["深水埗", "長沙灣"],
+            "九龍城區": ["九龍城", "啟德", "啟德跑道公園"],
+            "黃大仙區": ["黃大仙"],
+            "觀塘區": ["觀塘", "九龍灣"],
+            "大埔區": ["大埔", "大埔滘"],
+            "沙田區": ["沙田", "馬鞍山", "曾大屋"],
+            "西貢區": ["西貢", "將軍澳", "清水灣", "調景嶺"],
+            "北區": ["打鼓嶺", "上水", "雙魚河"],
+            "元朗區": ["元朗公園", "元朗", "濕地公園", "流浮山", "石崗"],
+            "屯門區": ["屯門", "大欖"],
+            "荃灣區": ["荃灣可風中學", "荃灣", "城門水塘"],
+            "葵青區": ["青衣", "葵涌"],
+            "離島區": ["赤鱲角", "長洲", "坪洲", "大老山", "昂坪", "橫瀾島", "沙螺灣", "愉景灣"]
+        };
+
+        async function fetchWeatherData() {
+            document.getElementById('update-status').innerText = "更新中...";
+            try {
+                const resCurrent = await fetch(API_CURRENT);
+                const currentData = await resCurrent.json();
+
+                let warningData = {};
+                try {
+                    const resWarning = await fetch(API_WARNING);
+                    warningData = await resWarning.json();
+                } catch(e) {}
+
+                renderStatus(currentData.updateTime);
+                renderWarnings(warningData);
+                renderNowcast(currentData.rainfall);
+                renderDistrictGrid(currentData);
+
+            } catch (error) {
+                console.error("獲取氣象數據失敗:", error);
+                document.getElementById('update-status').innerText = "錯誤 (請重試)";
+                document.getElementById('update-status').className = "font-semibold text-red-400";
+            }
+        }
+
+        function renderStatus(updateTime) {
+            if(!updateTime) return;
+            const time = new Date(updateTime).toLocaleTimeString('zh-HK', {hour: '2-digit', minute:'2-digit'});
+            const statusEl = document.getElementById('update-status');
+            statusEl.innerText = `已更新 ${time}`;
+            statusEl.className = "font-semibold text-green-300";
+        }
+
+        function renderWarnings(data) {
+            const container = document.getElementById('warning-container');
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = `<div class="bg-green-50 text-green-700 p-2.5 rounded-lg border border-green-200">🟢 現時無生效的天氣警告。</div>`;
+                return;
+            }
+            let html = '<div class="space-y-1.5">';
+            for (let key in data) {
+                html += `<div class="bg-red-50 text-red-700 p-2 rounded-lg border border-red-200 font-medium text-xs">⚠️ ${data[key].name}</div>`;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderNowcast(rainfallData) {
+            const container = document.getElementById('nowcast-container');
+            let maxRainStation = "無";
+            let maxRainVal = 0;
+
+            if (rainfallData && rainfallData.data) {
+                rainfallData.data.forEach(st => {
+                    if(st.max > maxRainVal) {
+                        maxRainVal = st.max;
+                        maxRainStation = st.place;
+                    }
+                });
+            }
+
+            let nowcastText = `💡 <b>降雨趨勢提示：</b>根據最新自動氣象站觀測，`;
+            if (maxRainVal > 0) {
+                nowcastText += `過去一段時間本港局部地區有雨，其中 <b>${maxRainStation}</b> 錄得最高約 <b>${maxRainVal}mm</b> 雨量。`;
+                nowcastText += `<br><span class="text-blue-600 font-medium">☔ 臨近預報提示：</span>預計未來兩小時相關網格點降雨機率較高，出門請攜帶雨具。`;
+            } else {
+                nowcastText += `本港目前普遍天色良好，未錄得顯著降雨。`;
+                nowcastText += `<br><span class="text-green-600 font-medium">☀️ 臨近預報提示：</span>預計未來兩小時各主網格點維持乾燥或無雨狀態。`;
+            }
+            container.innerHTML = `<p>${nowcastText}</p>`;
+        }
+
+        // 核心邏輯：動態整合數據到 18 區
+        function renderDistrictGrid(data) {
+            const grid = document.getElementById('district-grid');
+            grid.innerHTML = ""; 
+
+            // 1. 初始化 18 區的數據結構
+            const districtData = {};
+            for (let district in DISTRICT_MAPPING) {
+                districtData[district] = {
+                    temps: [],
+                    humidities: [],
+                    winds: [],
+                    rains: [],
+                    pressures: []
+                };
+            }
+
+            // 輔助函數：找出某個天文台地點屬於哪一個行政區
+            function getDistrictByPlace(placeName) {
+                for (let district in DISTRICT_MAPPING) {
+                    if (DISTRICT_MAPPING[district].some(p => placeName.includes(p) || p.includes(placeName))) {
+                        return district;
+                    }
+                }
+                return null;
