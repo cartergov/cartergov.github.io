@@ -2,19 +2,20 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <title>香港 18 區天氣實況 - 完整版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香港 18 區天氣實況 - 自動更新版</title>
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; background: #eef2f7; padding: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
         .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { color: #1e3a8a; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 0; }
-        .station { margin: 8px 0; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 0.85em; border: 1px solid #e2e8f0; }
+        h2 { color: #1e3a8a; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .station { margin: 8px 0; padding: 8px; background: #f8fafc; border-radius: 6px; font-size: 0.9em; }
         .val { font-weight: bold; color: #2563eb; }
     </style>
 </head>
 <body>
-    <h1>🌤️ 香港 18 區實時監測</h1>
-    <div id="status">最後更新：載入中...</div>
+    <h1>🌤️ 香港 18 區天氣實況</h1>
+    <div id="status">正在讀取數據...</div>
     <div id="app" class="grid"></div>
 
     <script>
@@ -39,45 +40,41 @@
             "離島": ["長洲", "坪洲", "昂坪", "赤鱲角", "南丫島", "長洲泳灘", "橫瀾島"]
         };
 
-        // 使用 corsproxy.io 解決 GitHub Pages 跨域存取 API 的問題
-        const API_BASE = "https://corsproxy.io/?url=https://data.weather.gov.hk/weatherAPI/opendata/weather.php";
-
-        async function updateWeather() {
+        async function loadWeather() {
             try {
-                const res = await fetch(API_URL);
+                // 直接讀取倉庫內的 data.json，後面加時間戳避免瀏覽器快取
+                const res = await fetch("data.json?t=" + new Date().getTime());
                 const data = await res.json();
                 const app = document.getElementById("app");
                 app.innerHTML = "";
 
                 for (const [dist, stations] of Object.entries(DISTRICT_MAP)) {
                     let html = `<div class="card"><h2>${dist}</h2>`;
-                    stations.forEach(stName => {
-                        const temp = data.temperature.data.find(d => d.place === stName);
-                        const hum = data.humidity.data.find(d => d.place === stName);
-                        const wind = data.wind.data.find(d => d.place === stName);
-                        const rain = data.rainfall.data.find(d => d.place === stName);
-
-                        html += `<div class="station">
-                            <strong>${stName}</strong><br>
-                            🌡️ 氣溫: <span class="val">${temp?.value ?? "N/A"}°C</span> | 
-                            💧 濕度: <span class="val">${hum?.value ?? "N/A"}%</span><br>
-                            🧭 風向: <span class="val">${wind?.direction ?? "N/A"}</span> | 
-                            💨 風速: <span class="val">${wind?.speed ?? "N/A"} km/h</span> | 
-                            🌪️ 陣風: <span class="val">${wind?.gust ?? "N/A"} km/h</span><br>
-                            ☔ 過去1小時雨量: <span class="val">${rain?.max ?? "0"} mm</span>
-                        </div>`;
+                    stations.forEach(st => {
+                        const temp = data.temperature?.data.find(d => d.place === st)?.value;
+                        const hum = data.humidity?.data.find(d => d.place === st)?.value;
+                        const wind = data.wind?.data.find(d => d.place === st);
+                        const rain = data.rainfall?.data.find(d => d.place === st)?.max;
+                        
+                        html += `<div class="station"><strong>${st}</strong><br>
+                                 🌡️ 氣溫: <span class="val">${temp ?? "N/A"}°C</span> | 
+                                 💧 濕度: <span class="val">${hum ?? "N/A"}%</span><br>
+                                 🧭 風向: <span class="val">${wind?.direction ?? "N/A"}</span> | 
+                                 💨 風速: <span class="val">${wind?.speed ?? "N/A"} km/h</span><br>
+                                 ☔ 雨量: <span class="val">${rain ?? "0"} mm</span></div>`;
                     });
                     html += `</div>`;
                     app.innerHTML += html;
                 }
                 document.getElementById("status").innerText = "最後更新：" + new Date().toLocaleTimeString();
             } catch (err) {
-                document.getElementById("status").innerText = "載入失敗，請確認網路環境。";
+                document.getElementById("status").innerText = "無法載入 data.json，請確認檔案已產生。";
             }
         }
 
-        updateWeather();
-        setInterval(updateWeather, 600000); // 10分鐘更新
+        loadWeather();
+        // 每 60 秒檢查一次是否有更新 (配合 GitHub Action 每 10 分鐘的更新)
+        setInterval(loadWeather, 60000);
     </script>
 </body>
 </html>
