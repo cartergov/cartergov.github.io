@@ -1,424 +1,80 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>香港天氣資訊 - 18區實時監測</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: "Microsoft JhengHei", "PingFang HK", "Noto Sans TC", sans-serif;
-    background: #eef2f7;
-    margin: 0;
-    padding: 0;
-    color: #1a1a2e;
-  }
-  header {
-    background: linear-gradient(135deg, #1e3a8a, #2563eb);
-    color: white;
-    padding: 22px 20px;
-    text-align: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-  }
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    max-width: 1240px;
-    margin: 0 auto;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  header h1 { margin: 0; font-size: 1.65em; font-weight: 700; letter-spacing: 0.5px; }
-  .header-warning-icons {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  .warning-icon-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-  .warning-icon-block img {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background: white;
-    padding: 3px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-    transition: transform 0.15s;
-    cursor: pointer;
-  }
-  .warning-icon-block img:hover { transform: scale(1.18); }
-  .warning-icon-time {
-    font-size: 0.62em;
-    color: white;
-    opacity: 0.95;
-    white-space: nowrap;
-    background: rgba(0,0,0,0.2);
-    padding: 1px 6px;
-    border-radius: 8px;
-  }
-  #updateTime { font-size: 0.95em; opacity: 0.92; margin: 10px 0 10px; }
-  #refreshBtn {
-    background: rgba(255,255,255,0.95);
-    color: #1e3a8a;
-    border: none;
-    padding: 7px 20px;
-    border-radius: 24px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.88em;
-    transition: transform 0.15s;
-  }
-  #refreshBtn:hover { transform: scale(1.05); }
-  .container { max-width: 1240px; margin: 0 auto; padding: 20px 16px; }
-  .section {
-    background: white;
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  }
-  .section h2 {
-    margin: 0 0 14px;
-    font-size: 1.2em;
-    font-weight: 700;
-    color: #1e3a8a;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section h2::before {
-    content: "";
-    display: inline-block;
-    width: 5px;
-    height: 20px;
-    background: #2563eb;
-    border-radius: 3px;
-  }
-  .legend-note {
-    font-size: 0.82em;
-    color: #64748b;
-    margin: -6px 0 14px;
-  }
-
-  .district-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-    gap: 16px;
-  }
-  .district-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
-    transition: box-shadow 0.15s;
-  }
-  .district-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.09); }
-  .district-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #dbe4f0;
-  }
-  .district-name { font-size: 1.15em; font-weight: 700; color: #1e40af; }
-  .badge-group { display: flex; gap: 6px; flex-wrap: wrap; }
-  .rain-badge, .nowcast-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.74em;
-    font-weight: 600;
-    padding: 3px 9px;
-    border-radius: 12px;
-    color: white;
-    white-space: nowrap;
-  }
-  .rain-badge { background: #2563eb; }
-  .nowcast-badge { background: #0891b2; }
-
-  .station-block {
-    padding: 10px 12px;
-    margin-top: 10px;
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #eef2f7;
-  }
-  .station-block:first-of-type { margin-top: 0; }
-  .station-name {
-    font-weight: 700;
-    font-size: 0.95em;
-    color: #334155;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .metric-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 6px 0;
-    border-top: 1px dashed #e5e9f0;
-  }
-  .metric-group:first-of-type { border-top: none; padding-top: 0; }
-  .metric-group-label {
-    font-size: 0.66em;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    font-weight: 700;
-  }
-  .metric-values {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-    font-size: 0.86em;
-    color: #475569;
-  }
-  .metric {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
-  .metric b { color: #1e293b; font-weight: 700; }
-  .temp-up { color: #dc2626 !important; font-weight: 700; }
-  .temp-down { color: #2563eb !important; font-weight: 700; }
-  .na-tag {
-    color: #cbd5e1;
-    font-style: italic;
-    font-size: 0.82em;
-  }
-  .no-station { color: #94a3b8; font-size: 0.85em; padding: 4px 0; }
-
-  .loading { text-align: center; padding: 40px; color: #64748b; }
-  .error-box {
-    background: #fef2f2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 12px;
-  }
-  footer {
-    text-align: center;
-    font-size: 0.8em;
-    color: #64748b;
-    padding: 24px 16px;
-  }
-  footer .na-note { display:block; margin-top:6px; font-size: 0.9em; color: #94a3b8; }
-
-  @media (max-width: 768px) {
-    .header-top { flex-direction: column; }
-    .header-warning-icons { position: static; transform: none; justify-content: center; margin-top: 6px; }
-    header h1 { font-size: 1.3em; }
-    .section { padding: 14px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <title>香港 18 區實時風力監測</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f7f6; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .station { margin: 8px 0; padding: 8px; background: #f9f9f9; border-radius: 5px; font-size: 0.85em; line-height: 1.4; }
+        .error { color: red; font-weight: bold; }
+    </style>
 </head>
 <body>
+    <h1>🌬️ 香港 18 區實時風力</h1>
+    <div id="status">正在連接天文台伺服器...</div>
+    <div id="app" class="grid"></div>
 
-<header>
-  <div class="header-top">
-    <h1>🌤️ 香港天氣資訊 - 18區實時監測</h1>
-    <div id="headerWarningIcons" class="header-warning-icons"></div>
-  </div>
-  <div id="updateTime">載入中...</div>
-  <button id="refreshBtn" onclick="loadWeather()">🔄 立即更新</button>
-</header>
+    <script>
+        // 測站對照表
+        const DISTRICT_MAP = {
+            "中西區": ["香港公園", "中環碼頭", "青洲", "山頂"],
+            "灣仔": ["跑馬地"],
+            "東區": ["筲箕灣", "北角"],
+            "南區": ["黃竹坑", "赤柱", "香港航海學校"],
+            "油尖旺": ["天文台", "京士柏", "天星碼頭"],
+            "九龍城": ["九龍城", "啟德跑道公園", "啟德"],
+            "觀塘": ["觀塘"],
+            "深水埗": ["深水埗"],
+            "黃大仙": ["黃大仙", "大老山"],
+            "葵青": ["青衣"],
+            "荃灣": ["荃灣可觀", "荃灣城門谷", "大帽山"],
+            "屯門": ["屯門"],
+            "元朗": ["元朗公園", "流浮山", "石崗", "濕地公園"],
+            "北區": ["打鼓嶺", "上水"],
+            "大埔": ["大埔", "大美督", "大埔滘"],
+            "沙田": ["沙田"],
+            "西貢": ["西貢", "清水灣", "將軍澳", "北潭涌", "滘西洲", "塔門"],
+            "離島": ["長洲", "坪洲", "昂坪", "赤鱲角", "南丫島", "長洲泳灘", "橫瀾島"]
+        };
 
-<div class="container">
+        // 使用 corsproxy.io 作為中轉，確保前端能正常抓取資料
+        const API_URL = "https://corsproxy.io/?url=https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc";
 
-  <div class="section">
-    <h2>18區天氣總覽</h2>
-    <p class="legend-note">
-      <span class="rain-badge">☔ 過去1小時雨量</span>
-      <span class="nowcast-badge">🌧️ 半小時臨近預報</span>
-      　🌡️氣溫/💧濕度/📈24hr溫差（<span class="temp-up">紅色=上升</span>／<span class="temp-down">藍色=下降</span>）｜🧭風力｜📊氣壓（缺值顯示 <span class="na-tag">N/A</span>）
-    </p>
-    <div id="districtsBox" class="loading">載入中...</div>
-  </div>
+        async function fetchWindData() {
+            const status = document.getElementById("status");
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("API 回應失敗");
+                
+                const data = await response.json();
+                const app = document.getElementById("app");
+                app.innerHTML = "";
 
-</div>
-
-<footer>
-  資料來源：香港天文台開放數據平台 (data.weather.gov.hk / hko.gov.hk) ｜ 每10分鐘自動更新
-  <span class="na-note">N/A = 該監測站暫無提供此項資料</span>
-</footer>
-
-<script>
-const API_URL = "/api/weather";
-const REFRESH_INTERVAL = 10 * 60 * 1000;
-const HKO_ICON_BASE = "https://www.hko.gov.hk/tc/wxinfo/dailywx/images/";
-
-const WARNING_ICON_FILE = {
-  "酷熱天氣警告": "vhot.gif",
-  "黃色暴雨警告信號": "raina.gif",
-  "紅色暴雨警告信號": "rainr.gif",
-  "黑色暴雨警告信號": "rainb.gif",
-  "一號戒備信號": "tc1.gif",
-  "三號強風信號": "tc3.gif",
-  "八號東南烈風或暴風信號": "tc8b.gif",
-  "八號西南烈風或暴風信號": "tc8c.gif",
-  "八號東北烈風或暴風信號": "tc8ne.gif",
-  "八號西北烈風或暴風信號": "tc8d.gif",
-  "九號烈風或暴風風力增強信號": "tc9.gif",
-  "十號颶風信號": "tc10.gif",
-  "雷暴警告": "ts.gif",
-  "新界北部水浸特別報告": "ntfl.gif",
-  "山泥傾瀉警告": "landslip.gif",
-  "寒冷天氣警告": "cold.gif",
-  "強烈季候風信號": "sms.gif",
-  "霜凍警告": "frost.gif",
-  "紅色火災危險警告": "firer.gif",
-  "黃色火災危險警告": "firey.gif",
-  "海嘯警告": "tsunami-warn.gif"
-};
-
-function findIconFile(name, type) {
-  const combined = (type || "") + (name || "");
-  for (const key in WARNING_ICON_FILE) {
-    if (combined.includes(key) || (name && name.includes(key))) {
-      return WARNING_ICON_FILE[key];
-    }
-  }
-  if (name && name.includes("熱帶氣旋") && type) {
-    for (const key in WARNING_ICON_FILE) {
-      if (type.includes(key.replace(/信號$/, ""))) return WARNING_ICON_FILE[key];
-    }
-  }
-  return null;
-}
-
-function formatTime(t) {
-  if (!t) return "N/A";
-  return t.replace("T", " ").replace(/\+08:00/, "").slice(0, 16);
-}
-
-async function loadWeather() {
-  try {
-    const res = await fetch(API_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    renderAll(data);
-  } catch (err) {
-    document.getElementById("districtsBox").innerHTML =
-      '<div class="error-box">資料載入失敗：' + err.message + '</div>';
-  }
-}
-
-function renderAll(data) {
-  document.getElementById("updateTime").textContent = "最後更新：" + data.updateTime;
-  renderHeaderIcons(data.warnings);
-  renderDistricts(data.districts, data.rainfall_1hr_by_district, data.nowcast_by_district);
-}
-
-function renderHeaderIcons(warnings) {
-  const box = document.getElementById("headerWarningIcons");
-  if (!warnings || warnings.error || Object.keys(warnings).length === 0) {
-    box.innerHTML = "";
-    return;
-  }
-  let html = "";
-  const seen = new Set();
-  for (const key in warnings) {
-    const w = warnings[key];
-    const name = w.name || key;
-    const iconFile = findIconFile(name, w.type);
-    if (iconFile && !seen.has(iconFile)) {
-      seen.add(iconFile);
-      const title = name + (w.type ? " - " + w.type : "");
-      const effTime = formatTime(w.issueTime || w.updateTime);
-      html += '<div class="warning-icon-block">';
-      html += '<img src="' + HKO_ICON_BASE + iconFile + '" alt="' + title + '" title="' + title + '">';
-      html += '<span class="warning-icon-time">' + effTime + '</span>';
-      html += '</div>';
-    }
-  }
-  box.innerHTML = html;
-}
-
-function tempDiffClass(diffStr) {
-  if (!diffStr || diffStr === "N/A") return "";
-  if (diffStr.startsWith("+")) return "temp-up";
-  if (diffStr.startsWith("-")) return "temp-down";
-  const v = parseFloat(diffStr);
-  if (isNaN(v)) return "";
-  return v > 0 ? "temp-up" : (v < 0 ? "temp-down" : "");
-}
-
-function renderDistricts(districts, rainfall, nowcast) {
-  const box = document.getElementById("districtsBox");
-  if (!districts) {
-    box.innerHTML = '<div class="error-box">分區資料暫時無法取得</div>';
-    return;
-  }
-  let html = '<div class="district-grid">';
-  for (const dist in districts) {
-    const stations = districts[dist];
-    const rainInfo = rainfall && rainfall[dist] ? rainfall[dist] : null;
-    const nowcastVal = nowcast && nowcast[dist] != null ? nowcast[dist] : null;
-
-    html += '<div class="district-card">';
-    html += '<div class="district-header"><span class="district-name">' + dist + '</span>';
-    html += '<div class="badge-group">';
-    if (rainInfo) html += '<span class="rain-badge">☔ ' + rainInfo.max + ' mm</span>';
-    if (nowcastVal != null) html += '<span class="nowcast-badge">🌧️ ' + nowcastVal.toFixed(1) + ' mm</span>';
-    html += '</div></div>';
-
-    if (!stations || stations.length === 0) {
-      html += '<div class="no-station">暫無監測站資料</div>';
-    } else {
-      stations.forEach(st => {
-        html += '<div class="station-block"><div class="station-name">📍 ' + st.name + '</div>';
-
-        const hasTemp = st.temperature || st.humidity || st.temp_diff_24h;
-        const hasWind = st.wind;
-        const hasPressure = st.pressure;
-
-        if (hasTemp) {
-          html += '<div class="metric-group"><span class="metric-group-label">氣溫 / 濕度</span><div class="metric-values">';
-          html += st.temperature ? '<span class="metric">🌡️ <b>' + st.temperature + '°C</b></span>' : '<span class="metric na-tag">🌡️ N/A</span>';
-          html += st.humidity ? '<span class="metric">💧 <b>' + st.humidity + '%</b></span>' : '<span class="metric na-tag">💧 N/A</span>';
-          if (st.temp_diff_24h) {
-            const cls = tempDiffClass(st.temp_diff_24h);
-            html += '<span class="metric">📈 24hr <b class="' + cls + '">' + st.temp_diff_24h + '°C</b></span>';
-          }
-          html += '</div></div>';
+                for (const [dist, stations] of Object.entries(DISTRICT_MAP)) {
+                    let html = `<div class="card"><h2>${dist}</h2>`;
+                    stations.forEach(stName => {
+                        const wind = data.wind.data.find(w => w.place === stName);
+                        html += `<div class="station">
+                            <strong>${stName}</strong><br>
+                            🧭 方向: ${wind ? wind.direction : "N/A"}<br>
+                            💨 平均風速: ${wind ? wind.speed + " km/h" : "N/A"}<br>
+                            🌪️ 最高陣風: ${wind ? wind.gust + " km/h" : "N/A"}
+                        </div>`;
+                    });
+                    html += `</div>`;
+                    app.innerHTML += html;
+                }
+                status.innerText = "最後更新：" + new Date().toLocaleTimeString();
+            } catch (err) {
+                status.innerHTML = `<span class="error">資料載入失敗: ${err.message}。請確認網頁部署環境。</span>`;
+            }
         }
-        if (hasWind) {
-          html += '<div class="metric-group"><span class="metric-group-label">風力</span><div class="metric-values">';
-          html += '<span class="metric">🧭 <b>' + st.wind.direction + '</b></span>';
-          html += '<span class="metric">💨 <b>' + st.wind.speed + '</b> km/h</span>';
-          html += '<span class="metric">🌬️ 陣風 <b>' + st.wind.gust + '</b> km/h</span>';
-          html += '</div></div>';
-        }
-        if (hasPressure) {
-          html += '<div class="metric-group"><span class="metric-group-label">氣壓</span><div class="metric-values">';
-          html += '<span class="metric">📊 <b>' + st.pressure + '</b> hPa</span>';
-          html += '</div></div>';
-        }
-        if (!hasTemp && !hasWind && !hasPressure) {
-          html += '<div class="metric-group na-tag">此站暫無資料</div>';
-        }
-        html += '</div>';
-      });
-    }
-    html += '</div>';
-  }
-  html += '</div>';
-  box.innerHTML = html;
-}
 
-loadWeather();
-setInterval(loadWeather, REFRESH_INTERVAL);
-</script>
-
+        fetchWindData();
+        setInterval(fetchWindData, 600000);
+    </script>
 </body>
 </html>
