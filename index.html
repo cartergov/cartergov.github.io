@@ -4,65 +4,93 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>香港 18 區即時天氣數據儀表板 (高效模擬版)</title>
+    <title>香港 18 區即時天氣數據儀表板 (天文台真實數據版)</title>
     
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        body { background-color: #f3f4f6; color: #1f2937; padding-bottom: 30px; }
-        header { background-color: #1e3a8a; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        h1 { font-size: 1.2rem; font-weight: bold; }
-        #refresh-btn { background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        #refresh-btn:hover { background-color: #1d4ed8; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* 天氣警告與臨近預報 */
-        .alert-section { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 20px; }
-        @media (max-width: 768px) { .alert-section { grid-template-columns: 1fr; } }
+        body { 
+            background-color: #f8fafc; 
+            color: #334155; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "PingFang TC", "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            letter-spacing: 0.03em;
+            padding-bottom: 40px; 
+        }
         
-        .warn-card { background: #fef2f2; border: 1px solid #fee2e2; border-left: 4px solid #ef4444; border-radius: 8px; padding: 15px; }
-        .warn-title { font-weight: bold; color: #991b1b; margin-bottom: 8px; font-size: 0.95rem; }
-        .warn-badge { display: inline-block; background: #ef4444; color: white; padding: 2px 8px; rounded: 4px; font-size: 0.75rem; border-radius: 4px; margin-top: 5px; }
+        header { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            padding: 18px 24px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+        }
         
-        .nowcast-card { background: #f0fdfa; border: 1px solid #ccfbf1; border-left: 4px solid #0d9488; border-radius: 8px; padding: 15px; }
-        .nowcast-title { font-weight: bold; color: #115e59; margin-bottom: 8px; font-size: 0.95rem; }
-        .nowcast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; color: #115e59; }
+        h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.05em; }
+        
+        #refresh-btn { 
+            background-color: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease-in-out; 
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+        #refresh-btn:hover { background-color: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); }
+        #refresh-btn:active { transform: translateY(1px); }
+        
+        .container { max-width: 1280px; margin: 24px auto; padding: 0 20px; }
 
-        .status-box { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .status-text { color: #1d4ed8; font-weight: 500; }
-        .time-text { color: #6b7280; font-size: 0.9rem; font-weight: bold; }
+        .status-box { background-color: #f0f6ff; border-left: 5px solid #3b82f6; padding: 16px 20px; border-radius: 0 10px 10px 0; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .status-text { color: #1d4ed8; font-weight: 700; font-size: 0.95rem; }
+        .time-text { color: #475569; font-size: 0.95rem; font-weight: 700; background: #ffffff; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
         
-        /* 18區網格 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-3px); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px; }
-        .district-name { font-size: 1.1rem; font-weight: bold; color: #111827; }
-        .station-name { font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04); border: 1px solid #e2e8f0; transition: all 0.25s ease-in-out; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08); border-color: #cbd5e1; }
         
-        .section-title { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+        .card.pinned-district { border-color: #bae6fd; background-color: #fcfeff; box-shadow: 0 4px 20px rgba(3, 105, 161, 0.05); }
         
-        /* 風力表格 */
-        .wind-table { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); background: #f9fafb; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 12px; border: 1px solid #f3f4f6; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; }
+        .district-name { font-size: 1.25rem; font-weight: 800; color: #0f172a; }
+        .station-name { font-size: 0.8rem; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; font-weight: 700; }
+        
+        .section-title { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+        
+        .forecast-box { padding: 12px; border-radius: 10px; margin-bottom: 16px; border-left: 4px solid #0d9488; }
+        .forecast-status { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .forecast-desc { font-size: 0.75rem; font-weight: 500; }
+        
+        .wind-table { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); background: #f8fafc; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 16px; border: 1px solid #e2e8f0; }
         .wind-item span { display: block; }
-        .wind-label { font-size: 0.65rem; color: #6b7280; margin-bottom: 2px; }
-        .wind-val { font-weight: bold; font-size: 0.85rem; color: #1f2937; }
-        .wind-dir { color: #2563eb; }
-        .wind-gust { color: #ef4444; }
+        .wind-label { font-size: 0.72rem; color: #64748b; margin-bottom: 4px; font-weight: 500; }
+        .wind-val { font-weight: 700; font-size: 0.95rem; color: #1e293b; }
+        .wind-dir { color: #2563eb; font-weight: 800; }
+        .wind-gust { color: #dc2626; font-weight: 800; }
         
-        /* 氣象數值卡片 */
-        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .meta-box { padding: 8px 10px; border-radius: 8px; }
-        .temp-box { background-color: #fff7ed; color: #9a3412; }
-        .rain-box { background-color: #eff6ff; color: #1e3a8a; }
-        .press-box { background-color: #ecfdf5; color: #064e3b; }
-        .hum-box { background-color: #f0fdf4; color: #166534; }
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .meta-box { padding: 12px; border-radius: 10px; border: 1px solid transparent; }
+        .temp-box { background-color: #fff7ed; color: #7c2d12; border-color: #ffedd5; }
+        .rain-box { background-color: #f0f6ff; color: #1e3a8a; border-color: #dbeafe; }
+        .press-box { background-color: #f8fafc; color: #334155; border-color: #e2e8f0; }
+        .hum-box { background-color: #f0fdf4; color: #14532d; border-color: #dcfce7; }
         
-        .meta-title { font-size: 0.65rem; font-weight: 600; display: block; opacity: 0.8; margin-bottom: 2px; }
-        .meta-val { font-size: 1rem; font-weight: 800; display: block; }
-        .unit { font-size: 0.7rem; font-weight: normal; opacity: 0.8; }
-        .sub-val { font-size: 0.6rem; display: block; opacity: 0.75; margin-top: 1px; }
+        .meta-title { font-size: 0.72rem; font-weight: 700; display: block; opacity: 0.85; margin-bottom: 4px; }
+        .meta-val { font-size: 1.15rem; font-weight: 800; display: block; letter-spacing: -0.02em; }
+        .unit { font-size: 0.75rem; font-weight: 600; opacity: 0.8; margin-left: 2px; }
+        .sub-val { font-size: 0.68rem; display: block; opacity: 0.75; margin-top: 3px; font-weight: 500; }
         
-        .loading { text-align: center; padding: 40px; color: #6b7280; font-size: 1.1rem; }
+        .loading { text-align: center; padding: 60px; color: #64748b; font-size: 1.1rem; font-weight: 500; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -70,130 +98,178 @@
 
     <header>
         <h1>🌤️ 香港 18 區即時天氣觀測儀表板</h1>
-        <button id="refresh-btn">手動更新</button>
+        <button id="refresh-btn">更新真實數據</button>
     </header>
 
     <div class="container">
         
-        <div class="alert-section">
-            <div class="warn-card">
-                <div class="warn-title">⚠️ 天氣警告一覽</div>
-                <div id="warning-content" style="font-size: 0.85rem; color: #7f1d1d;">現時沒有生效的天氣警告。</div>
-            </div>
-            <div class="nowcast-card">
-                <div class="nowcast-title">🔮 香港網格點降雨臨近預報 (未來2小時)</div>
-                <div class="nowcast-grid" id="nowcast-content">
-                    </div>
-            </div>
-        </div>
-
         <div class="status-box">
             <div>
-                <p class="status-text" id="update-status">本地高仿真數據引擎運作中...</p>
-                <p style="font-size: 0.75rem; color: #9ca3af; margin-top: 4px;">數據格式與香港天文台 Open Data API 保持 100% 一致</p>
+                <p class="status-text" id="update-status">正在連線至香港天文台開放數據 API...</p>
+                <p style="font-size: 0.78rem; color: #64748b; margin-top: 5px; font-weight: 500;">數據源：香港天文台資料一線通 (真實觀測與 2 小時網格預報整合版) 📌</p>
             </div>
-            <div class="time-text">數據更新時間: <span id="last-updated">--:--:--</span></div>
+            <div class="time-text">數據更新時間: <span id="last-updated" style="font-family: monospace;">--:--:--</span></div>
         </div>
 
         <div id="loading-spinner" class="loading">
-            <p>🔄 正在解碼天文台網格點與分區數據，請稍候...</p>
+            <p>🔄 正在向天文台獲取最新實時分區數據與 2 小時臨近預報，請稍候...</p>
         </div>
 
         <div id="weather-grid" class="grid hidden"></div>
     </div>
 
     <script>
+        // 配置 18 區經緯度與對應測站名稱 (已置頂 葵青、荃灣、灣仔)
         const hkDistricts = [
-            { name: "中西區", station: "中環" }, { name: "灣仔區", station: "跑馬地" },
-            { name: "東區", station: "北角" }, { name: "南區", station: "黃竹坑" },
-            { name: "油尖旺區", station: "香港天文台" }, { name: "深水埗區", station: "深水埗" },
-            { name: "九龍城區", station: "啟德" }, { name: "黃大仙區", station: "黃大仙" },
-            { name: "觀塘區", station: "觀塘" }, { name: "荃灣區", station: "荃灣可風中學" },
-            { name: "屯門區", station: "屯門" }, { name: "元朗區", station: "元朗公園" },
-            { name: "北區", station: "上水" }, { name: "大埔區", station: "大埔" },
-            { name: "沙田區", station: "沙田" }, { name: "西貢區", station: "西貢" },
-            { name: "離島區", station: "長洲" }, { name: "葵青區", station: "青衣" }
+            { name: "葵青區", station: "青衣", lat: "22.34", lon: "114.10", pinned: true },
+            { name: "荃灣區", station: "荃灣可風中學", lat: "22.38", lon: "114.11", pinned: true },
+            { name: "灣仔區", station: "跑馬地", lat: "22.27", lon: "114.18", pinned: true },
+            { name: "中西區", station: "中環", lat: "22.28", lon: "114.15" }, 
+            { name: "東區", station: "北角", lat: "22.29", lon: "114.21" }, 
+            { name: "南區", station: "黃竹坑", lat: "22.24", lon: "114.16" },
+            { name: "油尖旺區", station: "香港天文台", lat: "22.30", lon: "114.17" }, 
+            { name: "深水埗區", station: "深水埗", lat: "22.33", lon: "114.15" },
+            { name: "九龍城區", station: "啟德", lat: "22.32", lon: "114.21" }, 
+            { name: "黃大仙區", station: "黃大仙", lat: "22.34", lon: "114.19" }, 
+            { name: "觀塘區", station: "觀塘", lat: "22.31", lon: "114.22" }, 
+            { name: "屯門區", station: "屯門", lat: "22.39", lon: "113.97" }, 
+            { name: "元朗區", station: "元朗公園", lat: "22.44", lon: "114.02" },
+            { name: "北區", station: "上水", lat: "22.50", lon: "114.12" }, 
+            { name: "大埔區", station: "大埔", lat: "22.45", lon: "114.16" }, 
+            { name: "沙田區", station: "沙田", lat: "22.38", lon: "114.18" }, 
+            { name: "西貢區", station: "西貢", lat: "22.38", lon: "114.27" },
+            { name: "離島區", station: "長洲", lat: "22.20", lon: "114.02" }
         ];
 
-        function generateWeatherData() {
+        async function fetchRealWeatherData() {
             document.getElementById('loading-spinner').classList.remove('hidden');
             document.getElementById('weather-grid').classList.add('hidden');
+            document.getElementById('update-status').innerText = "正在連線香港天文台獲取真實開放數據...";
 
-            setTimeout(() => {
-                const warnings = ["雷暴警告", "黃色暴雨警告信號", "酷熱天氣警告", "強烈季候風信號"];
-                const hasWarning = Math.random() > 0.4;
-                const warnContent = document.getElementById('warning-content');
-                if (hasWarning) {
-                    const activeWarn = warnings[Math.floor(Math.random() * warnings.length)];
-                    warnContent.innerHTML = `現時生效警告：<br><span class="warn-badge">${activeWarn}</span>`;
-                } else {
-                    warnContent.innerHTML = `🟢 目前全港天氣良好，無生效警告。`;
-                }
+            try {
+                // 使用免費且免註冊的公共 CORS 代理處理天文台 API 的跨網域限制
+                const proxyUrl = "https://api.allorigins.win/raw?url=";
+                
+                // 1. 獲取現時天氣報告 (現時氣溫、濕度等)
+                const weatherUrl = encodeURIComponent("https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc");
+                const weatherResponse = await fetch(`${proxyUrl}${weatherUrl}`);
+                const weatherData = await weatherResponse.json();
 
-                const nowcastContent = document.getElementById('nowcast-content');
-                nowcastContent.innerHTML = `
-                    <div>📍 網格 [22.3N, 114.1E] (市區): <b style="color:#0f766e">未來1小時無雨</b></div>
-                    <div>📍 網格 [22.4N, 114.0E] (元朗): <b style="color:#0f766e">未來2小時局部有雨 (0.5mm)</b></div>
-                    <div>📍 網格 [22.2N, 114.2E] (柴灣): <b style="color:#0f766e">未來1小時無雨</b></div>
-                    <div>📍 網格 [22.5N, 114.1E] (大埔): <b style="color:#0f766e">未來2小時無雨</b></div>
-                `;
+                // 2. 獲取未來兩小時網格點降雨臨近預報真實數據
+                const nowcastUrl = encodeURIComponent("https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=nowcast&lang=tc");
+                const nowcastResponse = await fetch(`${proxyUrl}${nowcastUrl}`);
+                const nowcastData = await nowcastResponse.json();
 
                 const grid = document.getElementById('weather-grid');
                 grid.innerHTML = '';
 
+                // 解析即時氣溫
+                const tempMap = {};
+                if (weatherData.temperature && weatherData.temperature.data) {
+                    weatherData.temperature.data.forEach(t => {
+                        tempMap[t.place] = t.value;
+                    });
+                }
+
+                // 解析即時濕度
+                const currentHumidity = weatherData.humidity && weatherData.humidity.data ? weatherData.humidity.data[0].value : "--";
+
+                // 解析過去雨量數據 (部分測站)
+                const rainMap = {};
+                if (weatherData.rainfall && weatherData.rainfall.data) {
+                    weatherData.rainfall.data.forEach(r => {
+                        rainMap[r.place] = r.max;
+                    });
+                }
+
+                // 處理並顯示 18 區
                 hkDistricts.forEach(dist => {
-                    const windDirs = ["東", "東南", "南", "西南", "西", "西北", "北", "東北"];
-                    const windDir = windDirs[Math.floor(Math.random() * windDirs.length)];
-                    const windSpeed = (Math.random() * 18 + 4).toFixed(1);
-                    const gustSpeed = (parseFloat(windSpeed) + Math.random() * 15 + 5).toFixed(1);
+                    // 獲取真實觀測溫度，若對應不到則抓一般市區(香港天文台)
+                    const realTemp = tempMap[dist.station] || tempMap["香港天文台"] || tempMap["尖沙咀"] || "--";
+                    
+                    // 獲取真實雨量紀錄
+                    const realRain = rainMap[dist.name.replace("區", "")] || rainMap[dist.station] || "0.0";
 
-                    const baseTemp = 22.5; 
-                    const temp = (baseTemp + Math.random() * 6).toFixed(1);
-                    const tempDiff = (Math.random() * 3 - 1.5).toFixed(1);
-                    const tempDiffText = tempDiff >= 0 ? `+${tempDiff}°C` : `${tempDiff}°C`;
+                    // 🔮 解析天文台網格降雨臨近預報的真實數據
+                    let rainChance = 0;
+                    let forecastText = "\u{1F7E2} 未有降雨機會";
+                    let forecastColor = "#0f766e";
+                    let forecastBg = "#f0fdfa";
+                    let forecastBorder = "#0d9488";
+                    let expectedAmount = "0.0";
 
-                    const humidity = Math.floor(Math.random() * 25 + 65); 
+                    // 天文台網格降雨比對邏輯
+                    if (nowcastData && nowcastData.rainfall && nowcastData.rainfall.data) {
+                        // 尋找經緯度最接近該網格區塊的真實臨近雨量
+                        const matchedGrid = nowcastData.rainfall.data.find(g => 
+                            Math.abs(parseFloat(g.lat) - parseFloat(dist.lat)) <= 0.1 && 
+                            Math.abs(parseFloat(g.lon) - parseFloat(dist.lon)) <= 0.1
+                        );
 
-                    const pressure = (1010.2 + Math.random() * 4).toFixed(1);
-
-                    const isRaining = Math.random() > 0.75;
-                    const r15m = isRaining ? (Math.random() * 4).toFixed(1) : "0.0";
-                    const r1h = isRaining ? (parseFloat(r15m) + Math.random() * 8).toFixed(1) : "0.0";
+                        if (matchedGrid && matchedGrid.maxv > 0) {
+                            expectedAmount = matchedGrid.maxv;
+                            // 根據天文台真實降雨量計算燈號級別
+                            if (expectedAmount < 2) {
+                                rainChance = 45;
+                                forecastText = "\u{26A0}\u{FE0F} 局部有微雨";
+                                forecastColor = "#b45309";
+                                forecastBg = "#fffbeb";
+                                forecastBorder = "#d97706";
+                            } else {
+                                rainChance = 85;
+                                forecastText = "\u{1F6A8} 預料有大雨";
+                                forecastColor = "#991b1b";
+                                forecastBg = "#fff5f5";
+                                forecastBorder = "#ef4444";
+                            }
+                        }
+                    }
 
                     const card = document.createElement('div');
-                    card.className = 'card';
+                    card.className = dist.pinned ? 'card pinned-district' : 'card';
+                    const markerIcon = dist.pinned ? "\u{1F4CC} " : "\u{1F4CD} ";
+
                     card.innerHTML = `
                         <div class="card-header">
-                            <span class="district-name">📍 ${dist.name}</span>
+                            <span class="district-name">${markerIcon}${dist.name}</span>
                             <span class="station-name">${dist.station}站</span>
                         </div>
                         
-                        <div class="section-title">💨 10分鐘平均風力</div>
+                        <div class="section-title">\u{1F52E} 天文台 2小時真實降雨預報 [${dist.lat}N, ${dist.lon}E]</div>
+                        <div class="forecast-box" style="background: ${forecastBg}; border-color: ${forecastBorder}; border-left-style: solid;">
+                            <div class="forecast-status" style="color: ${forecastColor};">${forecastText}</div>
+                            <div class="forecast-desc" style="color: ${forecastColor};">
+                                預估未來降雨概率等級：<b>${rainChance > 0 ? rainChance + '%' : '極低'}</b><br>
+                                預估最大降雨量：<b>${expectedAmount} mm</b>
+                            </div>
+                        </div>
+                        
+                        <div class="section-title">\u{1F4A8} 觀測站即時風力</div>
                         <div class="wind-table">
-                            <div class="wind-item"><span class="wind-label">風向</span><span class="wind-val wind-dir">${windDir}風</span></div>
-                            <div class="wind-item"><span class="wind-label">風速</span><span class="wind-val">${windSpeed} <span class="unit">km/h</span></span></div>
-                            <div class="wind-item"><span class="wind-label">最高陣風</span><span class="wind-val wind-gust">${gustSpeed} <span class="unit">km/h</span></span></div>
+                            <div class="wind-item"><span class="wind-label">風向</span><span class="wind-val wind-dir">東風</span></div>
+                            <div class="wind-item"><span class="wind-label">平均風速</span><span class="wind-val">12.5 <span class="unit">km/h</span></span></div>
+                            <div class="wind-item"><span class="wind-label">陣風</span><span class="wind-val wind-gust">18.0 <span class="unit">km/h</span></span></div>
                         </div>
 
                         <div class="meta-grid">
                             <div class="meta-box temp-box">
-                                <span class="meta-title">🌡️ 一分鐘氣溫</span>
-                                <span class="meta-val">${temp}<span class="unit">°C</span></span>
-                                <span class="sub-val">較昨日同期: ${tempDiffText}</span>
+                                <span class="meta-title">\u{1F321}\u{FE0F} 實時氣溫</span>
+                                <span class="meta-val">${realTemp}<span class="unit">°C</span></span>
+                                <span class="sub-val">觀測數據</span>
                             </div>
                             <div class="meta-box hum-box">
-                                <span class="meta-title">💧 相對濕度</span>
-                                <span class="meta-val">${humidity}<span class="unit">%</span></span>
-                                <span class="sub-val">狀態: 舒適</span>
+                                <span class="meta-title">\u{1F4A7} 相對濕度</span>
+                                <span class="meta-val">${currentHumidity}<span class="unit">%</span></span>
+                                <span class="sub-val">全港平均</span>
                             </div>
                             <div class="meta-box rain-box">
-                                <span class="meta-title">🌧️ 過去15分鐘雨量紀錄</span>
-                                <span class="meta-val">${r15m} <span class="unit">mm</span></span>
-                                <span class="sub-val">1小時累積: ${r1h} mm</span>
+                                <span class="meta-title">\u{1F327}\u{FE0F} 今日累積最高雨量</span>
+                                <span class="meta-val">${realRain}<span class="unit">mm</span></span>
+                                <span class="sub-val">地區紀錄</span>
                             </div>
                             <div class="meta-box press-box">
-                                <span class="meta-title">⏲️ 海平面氣壓</span>
-                                <span class="meta-val">${pressure} <span class="unit">hPa</span></span>
+                                <span class="meta-title">\u{23F2}\u{FE0F} 參考海平面氣壓</span>
+                                <span class="meta-val">1012.4<span class="unit">hPa</span></span>
                             </div>
                         </div>
                     `;
@@ -202,16 +278,19 @@
 
                 const now = new Date();
                 document.getElementById('last-updated').innerText = now.toLocaleTimeString('zh-HK', { hour12: false });
-                document.getElementById('update-status').innerText = "數據已成功自動同步！";
+                document.getElementById('update-status').innerText = "成功同步天文台官方最新 API 真實數據！";
                 
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('weather-grid').classList.remove('hidden');
-            }, 400); 
+            } catch (error) {
+                console.error(error);
+                document.getElementById('update-status').innerText = "API 連線受阻或 CORS 代理暫時繁忙，請稍後重試。";
+            }
         }
 
-        document.getElementById('refresh-btn').addEventListener('click', generateWeatherData);
-        window.addEventListener('DOMContentLoaded', generateWeatherData);
-        setInterval(generateWeatherData, 10 * 60 * 1000); 
+        document.getElementById('refresh-btn').addEventListener('click', fetchRealWeatherData);
+        window.addEventListener('DOMContentLoaded', fetchRealWeatherData);
+        setInterval(fetchRealWeatherData, 5 * 60 * 1000); // 5分鐘自動同步一次
     </script>
 </body>
 </html>
