@@ -40,7 +40,7 @@
         };
 
         // 使用 corsproxy.io 解決 GitHub Pages 跨域存取 API 的問題
-        const API_URL = "https://corsproxy.io/?url=https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc";
+        const API_BASE = "https://corsproxy.io/?url=https://data.weather.gov.hk/weatherAPI/opendata/weather.php";
 
         async function updateWeather() {
             try {
