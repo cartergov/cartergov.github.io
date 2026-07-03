@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>香港 18 區即時天氣儀表板 (天文台官方 JSON 版)</title>
+    <title>香港 18 區即時天氣儀表板 (GitHub 穩定版)</title>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -103,7 +103,7 @@
         <div class="status-box">
             <div>
                 <p class="status-text" id="update-status">正在直接連線至香港天文台 API...</p>
-                <p style="font-size: 0.78rem; color: #64748b; margin-top: 5px;">數據源：data.weather.gov.hk (dataType=rhrread & flw) 📌</p>
+                <p style="font-size: 0.78rem; color: #64748b; margin-top: 5px;">數據源：data.weather.gov.hk (GitHub 跨域優化版) 📌</p>
             </div>
             <div class="time-text">數據更新時間: <span id="last-updated">--:--:--</span></div>
         </div>
@@ -116,7 +116,7 @@
     </div>
 
     <script>
-        // 設定 18 區，調整測站對應以獲得最精準數據
+        // 設定 18 區及其對應的天文台官方測站名稱
         const districts = [
             { name: "葵青區", places: ["青衣"], pinned: true },
             { name: "荃灣區", places: ["荃灣可風中學", "荃灣城門谷"], pinned: true },
@@ -138,7 +138,7 @@
             { name: "離島區", places: ["長洲", "赤鱲角", "坪洲"] }
         ];
 
-        // 溫度抽取函數
+        // 輔助：安全讀取單一數值（如氣溫）
         function getAPIValue(dataObj, places, fallback = "--") {
             if (!dataObj || !dataObj.data) return fallback;
             for (let place of places) {
@@ -148,16 +148,14 @@
             return fallback;
         }
 
-        // 1. 精準解析 15分鐘 及 1小時雨量
+        // 1. 解析過去15分鐘與1小時降雨量
         function getRainfallData(rainfallObj, districtName, places) {
-            let result = { min15: "0", hr1: "0" };
+            let result = { min15: "0.0", hr1: "0.0" };
             if (!rainfallObj || !rainfallObj.data) return result;
 
-            // 優先比對行政區域名稱 (如 "葵青")
             let shortName = districtName.replace("區", "");
             let item = rainfallObj.data.find(d => d.place.includes(shortName));
 
-            // 如果找不到，再從該區的特定測站比對
             if (!item) {
                 for (let place of places) {
                     item = rainfallObj.data.find(d => d.place.includes(place));
@@ -166,17 +164,16 @@
             }
 
             if (item) {
-                result.min15 = item.max15min !== undefined ? item.max15min : "0";
-                result.hr1 = item.max1hr !== undefined ? item.max1hr : "0";
+                result.min15 = item.max15min !== undefined ? item.max15min : "0.0";
+                result.hr1 = item.max1hr !== undefined ? item.max1hr : "0.0";
             }
             return result;
         }
 
-        // 2. 精準解析 10分鐘平均風向、風速 及 最高陣風
+        // 2. 解析10分鐘平均風向、風速及最高陣風
         function getWindData(rhr, places) {
             let result = { dir: "--", spd: "--", gust: "--" };
             
-            // 搜尋 10 分鐘平均風速及風向
             if (rhr.windSpeed && rhr.windSpeed.data) {
                 for (let place of places) {
                     let item = rhr.windSpeed.data.find(d => d.place === place);
@@ -188,7 +185,6 @@
                 }
             }
 
-            // 搜尋最高陣風
             if (rhr.windGust && rhr.windGust.data) {
                 for (let place of places) {
                     let item = rhr.windGust.data.find(d => d.place === place);
@@ -199,7 +195,7 @@
                 }
             }
 
-            // 如果該區測站沒有風力數據，拿長洲或九龍天星碼頭作全局後備
+            // 風力全局兜底（如果某個行政區沒有專屬風速計）
             if (result.spd === "--") {
                 const fallbackPlaces = ["長洲", "九龍天星碼頭", "赤鱲角"];
                 for (let fb of fallbackPlaces) {
@@ -217,25 +213,38 @@
             return result;
         }
 
+        // 跨域請求封裝（自動調配更換穩定的免費代理，避免 GitHub Pages 報錯）
+        async function fetchWithProxy(apiUrl) {
+            // 第一順位：Corsproxy.io (速度快，免激活)
+            try {
+                const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(apiUrl)}`);
+                if (res.ok) return await res.json();
+            } catch (e) {
+                console.warn("第一代理失敗，切換至備用代理...");
+            }
+
+            // 第二順位：AllOrigins 備用
+            const resBackup = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`);
+            if (!resBackup.ok) throw new Error("所有代理均失效");
+            const wrapper = await resBackup.json();
+            return JSON.parse(wrapper.contents);
+        }
+
         async function fetchRealWeatherData() {
             document.getElementById('loading-spinner').classList.remove('hidden');
             document.getElementById('weather-grid').classList.add('hidden');
-            document.getElementById('update-status').innerText = "正在直接呼叫天文台官方 JSON API...";
+            document.getElementById('update-status').innerText = "正在透過 GitHub 靜態優化代理讀取天文台數據...";
 
             try {
                 const API_BASE = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php";
                 
-                const [resRHR, resFLW] = await Promise.all([
-                    fetch(`${API_BASE}?dataType=rhrread&lang=tc`), 
-                    fetch(`${API_BASE}?dataType=flw&lang=tc`)     
+                // 同步異步抓取即時天氣與預報
+                const [rhr, flw] = await Promise.all([
+                    fetchWithProxy(`${API_BASE}?dataType=rhrread&lang=tc`),
+                    fetchWithProxy(`${API_BASE}?dataType=flw&lang=tc`)
                 ]);
 
-                if (!resRHR.ok || !resFLW.ok) throw new Error("API 連線失敗");
-
-                const rhr = await resRHR.json();
-                const flw = await resFLW.json();
-
-                // 天氣警告處理
+                // 1. 天氣警告處理
                 const warnContent = document.getElementById('warning-content');
                 if (rhr.warningMessage && rhr.warningMessage.length > 0) {
                     warnContent.innerHTML = rhr.warningMessage.map(w => `<span class="warn-badge">${w}</span>`).join('<br>');
@@ -243,27 +252,23 @@
                     warnContent.innerHTML = `🟢 目前全港天氣良好，無生效警告。`;
                 }
 
-                // 天氣預報處理
+                // 2. 天氣預報描述
                 const forecastContent = document.getElementById('forecast-content');
                 if (flw.forecastPeriod && flw.forecastDesc) {
                     forecastContent.innerHTML = `<div><b>${flw.forecastPeriod}</b><br><br>${flw.forecastDesc}</div>`;
                 }
 
-                // 全港濕度
+                // 3. 全港統一濕度
                 const currentHum = rhr.humidity && rhr.humidity.data ? rhr.humidity.data[0].value : "--";
 
+                // 4. 渲染 18 區
                 const grid = document.getElementById('weather-grid');
                 grid.innerHTML = '';
 
                 districts.forEach(dist => {
                     const temp = getAPIValue(rhr.temperature, dist.places.concat(["香港天文台"]));
-                    
-                    // 獲取特定的雨量與風力數據
                     const rain = getRainfallData(rhr.rainfall, dist.name, dist.places);
-                    const wind = getWindData(rhr.windSpeed ? rhr : {windSpeed: null}, dist.places.concat(dist.name.replace("區","")));
-                    
-                    // 安全覆蓋額外陣風數據（直接傳遞整包 rhr）
-                    const fullWind = getWindData(rhr, dist.places);
+                    const wind = getWindData(rhr, dist.places);
 
                     const card = document.createElement('div');
                     card.className = dist.pinned ? 'card pinned-district' : 'card';
@@ -284,14 +289,14 @@
                             </div>
                             <div class="meta-box rain-box">
                                 <span class="meta-title">🌧️ 降雨量紀錄</span>
-                                <span class="sub-val">15分鐘: <b>${fullWind.spd === "--" || rain.min15 === "0" ? rain.min15 : rain.min15}</b> <span class="unit">mm</span></span>
+                                <span class="sub-val">15分鐘: <b>${rain.min15}</b> <span class="unit">mm</span></span>
                                 <span class="sub-val">1小時: <b>${rain.hr1}</b> <span class="unit">mm</span></span>
                             </div>
                             <div class="meta-box wind-box">
                                 <span class="meta-title">💨 10分鐘平均風力</span>
-                                <span class="sub-val">風向: <b>${fullWind.dir}</b></span>
-                                <span class="sub-val">風速: <b>${fullWind.spd}</b> <span class="unit">km/h</span></span>
-                                <span class="sub-val" style="color: #b91c1c;">陣風: <b>${fullWind.gust}</b> <span class="unit">km/h</span></span>
+                                <span class="sub-val">風向: <b>${wind.dir}</b></span>
+                                <span class="sub-val">風速: <b>${wind.spd}</b> <span class="unit">km/h</span></span>
+                                <span class="sub-val" style="color: #b91c1c;">陣風: <b>${wind.gust}</b> <span class="unit">km/h</span></span>
                             </div>
                         </div>
                     `;
@@ -300,21 +305,22 @@
 
                 const now = new Date();
                 document.getElementById('last-updated').innerText = now.toLocaleTimeString('zh-HK', { hour12: false });
-                document.getElementById('update-status').innerText = "✅ 成功獲取並解析官方 JSON 數據！";
+                document.getElementById('update-status').innerText = "✅ 數據已成功同步並渲染！";
                 
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('weather-grid').classList.remove('hidden');
 
             } catch (error) {
                 console.error(error);
-                document.getElementById('update-status').innerText = "❌ 網絡或 API 連線錯誤，請重試。";
+                document.getElementById('update-status').innerText = "❌ 天文台 API 連線失敗，正等待下一輪重試。";
                 document.getElementById('loading-spinner').classList.add('hidden');
             }
         }
 
+        // 綁定事件
         document.getElementById('refresh-btn').addEventListener('click', fetchRealWeatherData);
         window.addEventListener('DOMContentLoaded', fetchRealWeatherData);
-        setInterval(fetchRealWeatherData, 5 * 60 * 1000); // 5分鐘自動更新
+        setInterval(fetchRealWeatherData, 5 * 60 * 1000); // 每5分鐘自動靜態刷新
     </script>
 </body>
 </html>
