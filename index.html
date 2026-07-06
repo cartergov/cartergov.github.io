@@ -2,46 +2,47 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>香港即時風速</title>
+    <title>香港實時風速</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #eee; }
+    </style>
 </head>
 <body>
-    <h1>全港即時風速</h1>
-    <div id="status">正在讀取...</div>
-    <div id="content"></div>
+    <h1>香港實時風速</h1>
+    <div id="msg">載入中...</div>
+    <table id="weather-table">
+        <thead><tr><th>測站</th><th>風速 (km/h)</th></tr></thead>
+        <tbody></tbody>
+    </table>
 
     <script>
+        // 使用天文台的官方 API
         const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc';
 
-        async function updateWeather() {
+        async function init() {
             try {
-                const response = await fetch(url);
-                const data = await response.json();
+                const res = await fetch(url);
+                const data = await res.json();
                 
-                // --- 診斷與容錯邏輯 ---
-                // 我們直接看 data 裡面有什麼，自動找出風速陣列
-                let windData = null;
-                if (data.wind && data.wind.speed && data.wind.speed.data) {
-                    windData = data.wind.speed.data;
-                } else {
-                    console.error("結構偵測失敗，完整物件為:", data);
-                    throw new Error("API 結構與程式不符，請看 Console 展開後的內容");
-                }
-
-                // 渲染
-                let html = `<table><tr><th>測站</th><th>風速</th></tr>`;
-                windData.forEach(s => {
-                    html += `<tr><td>${s.station}</td><td>${s.value} ${s.unit}</td></tr>`;
+                // 天文台數據路徑：data.wind.speed.data
+                const stations = data.wind.speed.data;
+                const tbody = document.querySelector('#weather-table tbody');
+                
+                tbody.innerHTML = '';
+                stations.forEach(s => {
+                    tbody.innerHTML += `<tr><td>${s.station}</td><td>${s.value}</td></tr>`;
                 });
-                html += `</table>`;
                 
-                document.getElementById('status').innerText = "數據更新成功！";
-                document.getElementById('content').innerHTML = html;
-
-            } catch (err) {
-                document.getElementById('status').innerHTML = `<span style="color:red;">讀取錯誤: ${err.message}</span>`;
+                document.getElementById('msg').innerText = "最後更新: " + data.updateTime;
+            } catch (e) {
+                document.getElementById('msg').innerHTML = "<span style='color:red'>讀取失敗，請檢查網路或 API 狀態。</span>";
+                console.error(e);
             }
         }
-        updateWeather();
+        init();
     </script>
 </body>
 </html>
