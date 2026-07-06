@@ -8,14 +8,10 @@
     <meta http-equiv="refresh" content="600">
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; }
-        /* 兩欄式網格 */
         .grid-2-cols { display: grid; gap: 1.25rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        /* 三欄式網格 */
         .grid-3-cols { display: grid; gap: 1.25rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        
         @media (max-width: 1024px) { .grid-3-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 768px) { .grid-2-cols, .grid-3-cols { grid-template-columns: repeat(1, minmax(0, 1fr)); } }
-        
         .card { background: white; padding: 1.25rem; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: all 0.3s ease; }
         .card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .card-img { height: 260px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; }
@@ -42,7 +38,10 @@
                 </div>
                 <div class="card border-l-4 border-blue-500">
                     <h3 class="font-bold text-lg text-blue-800 mb-4">📝 本港天氣概況</h3>
-                    <div id="general-report" class="text-sm text-slate-600 h-32 overflow-y-auto">正在讀取...</div>
+                    <div id="general-report" class="text-sm text-slate-600 h-24 overflow-y-auto mb-2">正在讀取...</div>
+                    <a href="https://i-lens.hk/hkweather/instant_chart.php?chart_type=DISTRICT_RAIN" target="_blank" class="text-teal-600 font-bold text-sm hover:underline">
+                        💧 查看各區即時雨量分佈 →
+                    </a>
                 </div>
                 <div class="card border-l-4 border-teal-500">
                     <h3 class="font-bold text-lg text-teal-800 mb-4">🌤️ 本港地區天氣預報</h3>
@@ -59,12 +58,10 @@
 
         <section>
             <h2 class="text-xl font-bold mb-6 text-slate-700">氣象數值分析</h2>
-            
             <div class="grid-2-cols">
                 <div class="card"><h3 class="font-bold text-sm mb-2">西北太平洋衛星雲圖</h3><div class="card-img"><img src="https://v4.hkcoc.com/nwp.gif?v=44"></div></div>
                 <div class="card"><h3 class="font-bold text-sm mb-2">熱帶氣旋路徑 (TSR)</h3><div class="card-img"><img src="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png"></div></div>
             </div>
-
             <div class="grid-3-cols mt-4">
                 <div class="card"><h3 class="font-bold text-xs mb-2">衛星影像色調強化</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF"></div></div>
                 <div class="card"><h3 class="font-bold text-xs mb-2">水氣圖</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg"></div></div>
@@ -81,9 +78,7 @@
 
     <script>
         document.getElementById('datetime').innerText = new Date().toLocaleString();
-        
         async function loadWeather() {
-            // 天氣警告
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc')
                 .then(r => r.json())
                 .then(data => {
@@ -91,8 +86,6 @@
                     for (let k in data) if (data[k].name) html += `<p class="mb-1 text-sm">✅ ${data[k].name}</p>`;
                     document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
                 });
-
-            // 天氣概況與預報
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc')
                 .then(r => r.json())
                 .then(data => {
