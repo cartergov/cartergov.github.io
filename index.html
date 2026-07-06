@@ -35,17 +35,18 @@
                 <span class="bg-blue-600 w-1.5 h-6 rounded mr-3"></span>本地即時天氣重點
             </h2>
             
-            <div class="grid-2-cols mb-6">
+            <div class="grid-3-cols mb-6">
                 <div class="card border-l-4 border-red-500">
                     <h3 class="font-bold text-lg text-red-600 mb-4">⚠️ 天氣警告</h3>
-                    <div id="warning-data" class="text-sm leading-relaxed">讀取中...</div>
+                    <div id="warning-data" class="text-sm h-32 overflow-y-auto">讀取中...</div>
                 </div>
                 <div class="card border-l-4 border-blue-500">
                     <h3 class="font-bold text-lg text-blue-800 mb-4">📝 本港天氣概況</h3>
-                    <div id="local-report" class="text-sm text-slate-600 h-32 overflow-y-auto mb-4 p-2 bg-slate-50 rounded-lg">正在讀取...</div>
-                    <a href="https://i-lens.hk/hkweather/instant_chart.php?chart_type=DISTRICT_RAIN" target="_blank" class="text-teal-600 font-bold hover:underline flex items-center">
-                        💧 查看各區雨量分佈圖 →
-                    </a>
+                    <div id="general-report" class="text-sm text-slate-600 h-32 overflow-y-auto">正在讀取...</div>
+                </div>
+                <div class="card border-l-4 border-teal-500">
+                    <h3 class="font-bold text-lg text-teal-800 mb-4">🌤️ 本港地區天氣預報</h3>
+                    <div id="forecast-report" class="text-sm text-slate-600 h-32 overflow-y-auto">正在讀取...</div>
                 </div>
             </div>
 
@@ -82,24 +83,22 @@
         document.getElementById('datetime').innerText = new Date().toLocaleString();
         
         async function loadWeather() {
-            const fetchWithError = async (url, elementId) => {
-                try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error();
-                    return await res.json();
-                } catch (e) {
-                    document.getElementById(elementId).innerHTML = `<span class="text-red-500 text-xs">❌ 資料無法載入</span>`;
-                    return null;
-                }
-            };
-            const w = await fetchWithError('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc', 'warning-data');
-            if(w) {
-                let html = "";
-                for (let k in w) if (w[k].name) html += `<p class="mb-1 text-sm">✅ ${w[k].name}</p>`;
-                document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
-            }
-            const f = await fetchWithError('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc', 'local-report');
-            if(f) document.getElementById('local-report').innerHTML = `<strong>${f.forecastDesc}</strong><br><br>${f.generalSituation}`;
+            // 天氣警告
+            fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc')
+                .then(r => r.json())
+                .then(data => {
+                    let html = "";
+                    for (let k in data) if (data[k].name) html += `<p class="mb-1 text-sm">✅ ${data[k].name}</p>`;
+                    document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
+                });
+
+            // 天氣概況與預報
+            fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('general-report').innerHTML = data.generalSituation;
+                    document.getElementById('forecast-report').innerHTML = `<strong>${data.forecastDesc}</strong><br><br>${data.outlook}`;
+                });
         }
         loadWeather();
     </script>
