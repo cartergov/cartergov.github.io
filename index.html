@@ -79,13 +79,34 @@
     <script>
         document.getElementById('datetime').innerText = new Date().toLocaleString();
         async function loadWeather() {
-            fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc')
+            // 已更新為 warningInfo API 以獲取詳細警告文字與生效/更新時間
+            fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc')
                 .then(r => r.json())
                 .then(data => {
                     let html = "";
-                    for (let k in data) if (data[k].name) html += `<p class="mb-1 text-sm">✅ ${data[k].name}</p>`;
+                    if (data.details && data.details.length > 0) {
+                        data.details.forEach(item => {
+                            if (item.contents && item.contents.length > 0) {
+                                const title = item.contents[0]; // 警告名稱
+                                const detailsText = item.contents.slice(1).join('<br>'); // 詳細內容及時間說明
+                                const updateTime = new Date(item.updateTime).toLocaleString('zh-HK'); // 系統更新時間
+                                
+                                html += `
+                                    <div class="mb-4 pb-3 border-b border-slate-100 last:border-0 last:pb-0">
+                                        <p class="font-bold text-red-600 flex items-center gap-1">🔴 ${title}</p>
+                                        <p class="text-xs text-slate-400 mt-0.5 mb-2">系統更新時間：${updateTime}</p>
+                                        <p class="text-slate-600 leading-relaxed text-xs">${detailsText}</p>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
                     document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
+                })
+                .catch(err => {
+                    document.getElementById('warning-data').innerHTML = "無法讀取天氣警告資料。";
                 });
+
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc')
                 .then(r => r.json())
                 .then(data => {
