@@ -1,170 +1,107 @@
 <!DOCTYPE html>
-<html lang="zh-Hant-HK">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>香港 18 區即時天氣儀表板 (修正版)</title>
-    
+    <title>熱帶氣旋整合資料庫</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta http-equiv="refresh" content="600">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #f8fafc; color: #334155; font-family: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft JhengHei", sans-serif; line-height: 1.6; padding-bottom: 40px; }
-        header { background-color: #0f172a; color: #f8fafc; padding: 18px 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        h1 { font-size: 1.35rem; font-weight: 700; }
-        #refresh-btn { background-color: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
-        #refresh-btn:hover { background-color: #2563eb; transform: translateY(-1px); }
-        .container { max-width: 1280px; margin: 24px auto; padding: 0 20px; }
-        .alert-section { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px; }
-        @media (max-width: 768px) { .alert-section { grid-template-columns: 1fr; } }
-        .warn-card { background: #fff5f5; border: 1px solid #fee2e2; border-left: 5px solid #ef4444; border-radius: 10px; padding: 18px; }
-        .warn-title { font-weight: 700; color: #991b1b; margin-bottom: 10px; font-size: 1rem; }
-        .warn-badge { display: inline-block; background: #ef4444; color: white; padding: 4px 10px; font-size: 0.8rem; font-weight: 700; border-radius: 6px; margin-top: 6px; }
-        .forecast-card { background: #f0fdfa; border: 1px solid #ccfbf1; border-left: 5px solid #0d9488; border-radius: 10px; padding: 18px; }
-        .forecast-title { font-weight: 700; color: #115e59; margin-bottom: 10px; font-size: 1rem; }
-        .forecast-content { font-size: 0.9rem; color: #134e4a; font-weight: 500; }
-        .status-box { background-color: #f0f6ff; border-left: 5px solid #3b82f6; padding: 16px 20px; border-radius: 0 10px 10px 0; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-        .status-text { color: #1d4ed8; font-weight: 700; font-size: 0.95rem; }
-        .time-text { color: #475569; font-size: 0.95rem; font-weight: 700; background: #ffffff; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
-        .card.pinned-district { border-color: #bae6fd; background-color: #fcfeff; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; }
-        .district-name { font-size: 1.25rem; font-weight: 800; color: #0f172a; }
-        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .meta-box { padding: 12px; border-radius: 10px; }
-        .temp-box { background-color: #fff7ed; color: #7c2d12; }
-        .hum-box { background-color: #f0fdf4; color: #14532d; }
-        .rain-box { background-color: #f0f6ff; color: #1e3a8a; }
-        .wind-box { background-color: #f8fafc; color: #334155; }
-        .meta-title { font-size: 0.72rem; font-weight: 700; display: block; opacity: 0.85; margin-bottom: 4px; }
-        .meta-val { font-size: 1.15rem; font-weight: 800; display: block; }
-        .unit { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
-        .loading { text-align: center; padding: 60px; color: #64748b; font-size: 1.1rem; font-weight: 500; }
-        .hidden { display: none !important; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; }
+        /* 兩欄式網格 */
+        .grid-2-cols { display: grid; gap: 1.25rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        /* 三欄式網格 */
+        .grid-3-cols { display: grid; gap: 1.25rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        
+        @media (max-width: 1024px) { .grid-3-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 768px) { .grid-2-cols, .grid-3-cols { grid-template-columns: repeat(1, minmax(0, 1fr)); } }
+        
+        .card { background: white; padding: 1.25rem; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: all 0.3s ease; }
+        .card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .card-img { height: 260px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; }
+        .card-img img, .card-img iframe { width: 100%; height: 100%; object-fit: contain; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900 p-6">
 
-    <header>
-        <h1>🌤️ 香港 18 區即時天氣儀表板</h1>
-        <button id="refresh-btn">載入官方 JSON 數據</button>
+    <header class="mb-10 max-w-7xl mx-auto">
+        <h1 class="text-4xl font-black tracking-tight text-slate-800 mb-2">熱帶氣旋整合資料庫</h1>
+        <p class="text-slate-500 font-medium">最後更新：<span id="datetime"></span></p>
     </header>
 
-    <div class="container">
-        <div class="alert-section">
-            <div class="warn-card">
-                <div class="warn-title">⚠️ 天氣警告一覽</div>
-                <div id="warning-content" style="font-size: 0.9rem; color: #7f1d1d; font-weight: 500;">連線中...</div>
+    <main class="max-w-7xl mx-auto">
+        <section class="mb-10">
+            <h2 class="text-xl font-bold mb-6 flex items-center text-slate-700">
+                <span class="bg-blue-600 w-1.5 h-6 rounded mr-3"></span>本地即時天氣重點
+            </h2>
+            
+            <div class="grid-2-cols mb-6">
+                <div class="card border-l-4 border-red-500">
+                    <h3 class="font-bold text-lg text-red-600 mb-4">⚠️ 天氣警告</h3>
+                    <div id="warning-data" class="text-sm leading-relaxed">讀取中...</div>
+                </div>
+                <div class="card border-l-4 border-blue-500">
+                    <h3 class="font-bold text-lg text-blue-800 mb-4">📝 本港天氣概況</h3>
+                    <div id="local-report" class="text-sm text-slate-600 h-32 overflow-y-auto mb-4 p-2 bg-slate-50 rounded-lg">正在讀取...</div>
+                    <a href="https://i-lens.hk/hkweather/instant_chart.php?chart_type=DISTRICT_RAIN" target="_blank" class="text-teal-600 font-bold hover:underline flex items-center">
+                        💧 查看各區雨量分佈圖 →
+                    </a>
+                </div>
             </div>
-            <div class="forecast-card">
-                <div class="forecast-title">🔮 本港地區天氣預報</div>
-                <div class="forecast-content" id="forecast-content">正在解碼 JSON 預報...</div>
+
+            <div class="grid-3-cols">
+                <div class="card"><h3 class="font-bold mb-3 text-sm">雷達影像</h3><div class="card-img"><img src="https://www.weather.gov.hk/content_elements_v2/images/radar/front_R1.jpg"></div></div>
+                <div class="card"><h3 class="font-bold mb-3 text-sm">全港平均風向及風速</h3><div class="card-img"><img src="https://www.hko.gov.hk/wxinfo/ts/windchk.png"></div></div>
+                <div class="card"><h3 class="font-bold mb-3 text-sm">香港風力指數</h3><div class="card-img"><iframe src="https://v4.hkcoc.com/windindex/" class="border-0"></iframe></div></div>
             </div>
-        </div>
+        </section>
 
-        <div class="status-box">
-            <div>
-                <p class="status-text" id="update-status">正在直接連線至香港天文台 API...</p>
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-slate-700">氣象數值分析</h2>
+            
+            <div class="grid-2-cols">
+                <div class="card"><h3 class="font-bold text-sm mb-2">西北太平洋衛星雲圖</h3><div class="card-img"><img src="https://v4.hkcoc.com/nwp.gif?v=44"></div></div>
+                <div class="card"><h3 class="font-bold text-sm mb-2">熱帶氣旋路徑 (TSR)</h3><div class="card-img"><img src="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png"></div></div>
             </div>
-            <div class="time-text">數據更新時間: <span id="last-updated">--:--:--</span></div>
-        </div>
 
-        <div id="loading-spinner" class="loading">
-            <p>🔄 正在下載官方 JSON 檔案，請稍候...</p>
-        </div>
-
-        <div id="weather-grid" class="grid hidden"></div>
-    </div>
+            <div class="grid-3-cols mt-4">
+                <div class="card"><h3 class="font-bold text-xs mb-2">衛星影像色調強化</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">水氣圖</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">駛流平均</h3><div class="card-img"><img src="http://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmsdlm4.GIF"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">垂直風切變</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmswxc.GIF"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">地面氣溫圖</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sftt_c_00.png"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">海平面風場及濕度</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sfrh_c_00.png"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">850hPa 渦場分析</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up85vt_c_00.png"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">500hPa 位勢高度</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up50hh_c_00.png"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">200hPa 流線及急流</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up20is_c_00.png"></div></div>
+            </div>
+        </section>
+    </main>
 
     <script>
-        const districts = [
-            { name: "葵青區", places: ["青衣"], pinned: true },
-            { name: "荃灣區", places: ["荃灣可風中學", "荃灣"], pinned: true },
-            { name: "灣仔區", places: ["跑馬地", "灣仔"], pinned: true },
-            { name: "中西區", places: ["香港公園", "中環碼頭"] }, 
-            { name: "東區", places: ["筲箕灣", "北角"] }, 
-            { name: "南區", places: ["黃竹坑", "赤柱"] },
-            { name: "油尖旺區", places: ["香港天文台", "京士柏"] }, 
-            { name: "深水埗區", places: ["深水埗"] },
-            { name: "九龍城區", places: ["九龍城", "啟德"] }, 
-            { name: "黃大仙區", places: ["黃大仙"] }, 
-            { name: "觀塘區", places: ["觀塘"] }, 
-            { name: "屯門區", places: ["屯門"] }, 
-            { name: "元朗區", places: ["元朗公園", "流浮山"] },
-            { name: "北區", places: ["打鼓嶺", "上水"] }, 
-            { name: "大埔區", places: ["大埔", "大美督"] }, 
-            { name: "沙田區", places: ["沙田", "馬鞍山"] }, 
-            { name: "西貢區", places: ["西貢", "將軍澳"] },
-            { name: "離島區", places: ["長洲", "赤鱲角"] }
-        ];
-
-        function getAPIValue(dataObj, places, key = "value") {
-            if (!dataObj || !dataObj.data) return "--";
-            for (let place of places) {
-                const item = dataObj.data.find(d => d.place === place);
-                if (item && item[key] !== undefined) return item[key];
+        document.getElementById('datetime').innerText = new Date().toLocaleString();
+        
+        async function loadWeather() {
+            const fetchWithError = async (url, elementId) => {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error();
+                    return await res.json();
+                } catch (e) {
+                    document.getElementById(elementId).innerHTML = `<span class="text-red-500 text-xs">❌ 資料無法載入</span>`;
+                    return null;
+                }
+            };
+            const w = await fetchWithError('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc', 'warning-data');
+            if(w) {
+                let html = "";
+                for (let k in w) if (w[k].name) html += `<p class="mb-1 text-sm">✅ ${w[k].name}</p>`;
+                document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
             }
-            return "--";
+            const f = await fetchWithError('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc', 'local-report');
+            if(f) document.getElementById('local-report').innerHTML = `<strong>${f.forecastDesc}</strong><br><br>${f.generalSituation}`;
         }
-
-        async function fetchRealWeatherData() {
-            document.getElementById('loading-spinner').classList.remove('hidden');
-            document.getElementById('weather-grid').classList.add('hidden');
-            
-            try {
-                const API_BASE = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php";
-                const [resRHR, resFLW] = await Promise.all([
-                    fetch(`${API_BASE}?dataType=rhrread&lang=tc`).then(r => r.json()),
-                    fetch(`${API_BASE}?dataType=flw&lang=tc`).then(r => r.json())
-                ]);
-
-                // 處理警告
-                const warnContent = document.getElementById('warning-content');
-                warnContent.innerHTML = (resRHR.warningMessage && resRHR.warningMessage.length > 0) 
-                    ? resRHR.warningMessage.map(w => `<span class="warn-badge">${w}</span>`).join('<br>')
-                    : `🟢 目前無生效警告。`;
-
-                // 處理預報
-                document.getElementById('forecast-content').innerHTML = `<b>${resFLW.forecastPeriod || ""}</b><br>${resFLW.forecastDesc || ""}`;
-
-                // 全港濕度
-                const currentHum = (resRHR.humidity && resRHR.humidity.data) ? resRHR.humidity.data[0].value : "--";
-
-                // 渲染 18 區
-                const grid = document.getElementById('weather-grid');
-                grid.innerHTML = '';
-
-                districts.forEach(dist => {
-                    const temp = getAPIValue(resRHR.temperature, dist.places);
-                    // 修正雨量獲取：天文台 API 中 rainfall 的數據鍵是 "max"
-                    const rain = getAPIValue(resRHR.rainfall, dist.places, "max");
-                    const windDir = getAPIValue(resRHR.windDirection, dist.places);
-                    const windSpd = getAPIValue(resRHR.windSpeed, dist.places);
-
-                    const card = document.createElement('div');
-                    card.className = dist.pinned ? 'card pinned-district' : 'card';
-                    card.innerHTML = `
-                        <div class="card-header"><span class="district-name">${dist.pinned ? "📌 " : "📍 "}${dist.name}</span></div>
-                        <div class="meta-grid">
-                            <div class="meta-box temp-box"><span class="meta-title">🌡️ 氣溫</span><span class="meta-val">${temp} <span class="unit">°C</span></span></div>
-                            <div class="meta-box hum-box"><span class="meta-title">💧 濕度</span><span class="meta-val">${currentHum} <span class="unit">%</span></span></div>
-                            <div class="meta-box rain-box"><span class="meta-title">🌧️ 雨量</span><span class="meta-val">${rain} <span class="unit">mm</span></span></div>
-                            <div class="meta-box wind-box"><span class="meta-title">💨 風力</span><span class="meta-val">${windDir} ${windSpd} <span class="unit">km/h</span></span></div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-
-                document.getElementById('last-updated').innerText = new Date().toLocaleTimeString('zh-HK', { hour12: false });
-                document.getElementById('loading-spinner').classList.add('hidden');
-                grid.classList.remove('hidden');
-            } catch (error) {
-                document.getElementById('update-status').innerText = "❌ 資料獲取失敗，請稍後重試。";
-                document.getElementById('loading-spinner').classList.add('hidden');
-            }
-        }
-
-        document.getElementById('refresh-btn').addEventListener('click', fetchRealWeatherData);
-        window.addEventListener('DOMContentLoaded', fetchRealWeatherData);
+        loadWeather();
     </script>
 </body>
 </html>
