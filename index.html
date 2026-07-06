@@ -2,44 +2,46 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>香港即時風速測試</title>
+    <title>香港即時風速</title>
 </head>
 <body>
-
-    <h1>測試：香港天文台即時風速</h1>
-    <div id="output" style="border: 1px solid #000; padding: 20px; width: 300px;">
-        正在連接天文台伺服器...
-    </div>
+    <h1>全港即時風速</h1>
+    <div id="status">正在讀取...</div>
+    <div id="content"></div>
 
     <script>
-        // 修正後的 API URL，改用更穩定的版本
         const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc';
 
-        async function loadWeather() {
+        async function updateWeather() {
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('伺服器回應錯誤');
                 const data = await response.json();
-
-                // 搜尋尖沙咀天星碼頭
-                const stationName = '尖沙咀天星碼頭';
-                const stationData = data.wind.speed.data.find(s => s.station === stationName);
-
-                if (stationData) {
-                    document.getElementById('output').innerHTML = `
-                        <h3>地區：${stationData.station}</h3>
-                        <p style="font-size: 20px; color: blue;">風速：${stationData.value} ${stationData.unit}</p>
-                        <p>更新時間：${data.updateTime.split('T')[1].substring(0, 5)}</p>
-                        <p style="color: green;">✔ 數據讀取成功！</p>
-                    `;
+                
+                // --- 診斷與容錯邏輯 ---
+                // 我們直接看 data 裡面有什麼，自動找出風速陣列
+                let windData = null;
+                if (data.wind && data.wind.speed && data.wind.speed.data) {
+                    windData = data.wind.speed.data;
                 } else {
-                    document.getElementById('output').innerText = '找不到該測站資料';
+                    console.error("結構偵測失敗，完整物件為:", data);
+                    throw new Error("API 結構與程式不符，請看 Console 展開後的內容");
                 }
+
+                // 渲染
+                let html = `<table><tr><th>測站</th><th>風速</th></tr>`;
+                windData.forEach(s => {
+                    html += `<tr><td>${s.station}</td><td>${s.value} ${s.unit}</td></tr>`;
+                });
+                html += `</table>`;
+                
+                document.getElementById('status').innerText = "數據更新成功！";
+                document.getElementById('content').innerHTML = html;
+
             } catch (err) {
-                document.getElementById('output').innerText = '讀取失敗: ' + err.message;
+                document.getElementById('status').innerHTML = `<span style="color:red;">讀取錯誤: ${err.message}</span>`;
             }
         }
-        loadWeather();
+        updateWeather();
     </script>
 </body>
 </html>
