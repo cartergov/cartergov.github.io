@@ -16,8 +16,6 @@
         .card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .card-img { height: 260px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; }
         .card-img img, .card-img iframe { width: 100%; height: 100%; object-fit: contain; }
-        
-        /* 手機版優化 */
         #top-right-warnings { z-index: 9999; }
         @media (max-width: 768px) {
             #top-right-warnings { top: 10px; right: 10px; gap: 0.5rem; }
@@ -39,7 +37,6 @@
             <h2 class="text-xl font-bold mb-6 flex items-center text-slate-700">
                 <span class="bg-blue-600 w-1.5 h-6 rounded mr-3"></span>本地即時天氣重點
             </h2>
-            
             <div class="grid-3-cols mb-6">
                 <div class="card border-l-4 border-red-500">
                     <h3 class="font-bold text-lg text-red-600 mb-4">⚠️ 天氣警告</h3>
@@ -48,9 +45,7 @@
                 <div class="card border-l-4 border-blue-500">
                     <h3 class="font-bold text-lg text-blue-800 mb-4">📝 本港天氣概況</h3>
                     <div id="general-report" class="text-sm text-slate-600 h-24 overflow-y-auto mb-2">正在讀取...</div>
-                    <a href="https://i-lens.hk/hkweather/instant_chart.php?chart_type=DISTRICT_RAIN" target="_blank" class="text-teal-600 font-bold text-sm hover:underline">
-                        💧 查看各區即時雨量分佈 →
-                    </a>
+                    <a href="https://i-lens.hk/hkweather/instant_chart.php?chart_type=DISTRICT_RAIN" target="_blank" class="text-teal-600 font-bold text-sm hover:underline">💧 查看各區即時雨量分佈 →</a>
                 </div>
                 <div class="card border-l-4 border-teal-500">
                     <h3 class="font-bold text-lg text-teal-800 mb-4">🌤️ 本港地區天氣預報</h3>
@@ -78,90 +73,57 @@
                 <div class="card"><h3 class="font-bold text-xs mb-2">垂直風切變</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmswxc.GIF" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmswxc.GIF"></a></div></div>
                 <div class="card"><h3 class="font-bold text-xs mb-2">地面氣溫圖</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/sftt_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sftt_c_00.png"></a></div></div>
                 <div class="card"><h3 class="font-bold text-xs mb-2">海平面風場及濕度</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/sfrh_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sfrh_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">850hPa 渦場分析</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/up85vt_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up85vt_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">500hPa 位勢高度</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/up50hh_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up50hh_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">200hPa 流線及急流</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/up20is_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up20is_c_00.png"></a></div></div>
             </div>
         </section>
 
         <section class="mt-8">
-            <h2 class="text-xl font-bold mb-6 text-slate-700">全球氣象即時動態 (Earth)</h2>
+            <h2 class="text-xl font-bold mb-6 text-slate-700">即時風場動態 (Windy)</h2>
             <div class="card w-full h-[500px] overflow-hidden p-0">
-                <iframe src="https://earth.nullschool.net/zh-Hant/#current/wind/surface/level/orthographic=114.17,22.30,3000" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>
+                <iframe src="https://embed.windy.com/embed2.html?lat=21.527&lon=115.234&zoom=5&overlay=wind" style="width:100%; height:100%; border:none;" allowfullscreen></iframe>
             </div>
         </section>
     </main>
 
     <script>
         document.getElementById('datetime').innerText = new Date().toLocaleString();
-        
         const warningIcons = {
-            "一號戒備信號": "https://www.hko.gov.hk/en/images/tc1.gif",
-            "三號強風信號": "https://www.hko.gov.hk/en/images/tc3.gif",
-            "八號東南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8se.gif",
-            "八號東北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8ne.gif",
-            "八號西南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8sw.gif",
-            "八號西北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8nw.gif",
-            "九號烈風或暴風風力增強信號": "https://www.hko.gov.hk/en/images/tc9.gif",
-            "十號颶風信號": "https://www.hko.gov.hk/en/images/tc10.gif",
-            "強烈季候風信號": "https://www.hko.gov.hk/en/images/sms.gif",
-            "黃色暴雨警告信號": "https://www.hko.gov.hk/en/images/raina.gif",
-            "紅色暴雨警告信號": "https://www.hko.gov.hk/en/images/rainr.gif",
-            "黑色暴雨警告信號": "https://www.hko.gov.hk/en/images/rainb.gif",
-            "山泥傾瀉警告": "https://www.hko.gov.hk/en/images/landslip.gif",
-            "雷暴警告": "https://www.hko.gov.hk/en/images/ts.gif",
-            "黃色火災危險警告": "https://www.hko.gov.hk/en/images/firey.gif",
-            "紅色火災危險警告": "https://www.hko.gov.hk/en/images/firer.gif",
-            "新界北部水浸特別報告": "https://www.hko.gov.hk/en/images/ntfl.gif",
-            "寒冷天氣警告": "https://www.hko.gov.hk/en/images/cold.gif",
-            "酷熱天氣警告": "https://www.hko.gov.hk/en/images/vhot.gif",
-            "霜凍警告": "https://www.hko.gov.hk/en/images/frost.gif"
+            "一號戒備信號": "https://www.hko.gov.hk/en/images/tc1.gif", "三號強風信號": "https://www.hko.gov.hk/en/images/tc3.gif",
+            "八號東南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8se.gif", "八號東北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8ne.gif",
+            "八號西南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8sw.gif", "八號西北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8nw.gif",
+            "九號烈風或暴風風力增強信號": "https://www.hko.gov.hk/en/images/tc9.gif", "十號颶風信號": "https://www.hko.gov.hk/en/images/tc10.gif",
+            "強烈季候風信號": "https://www.hko.gov.hk/en/images/sms.gif", "黃色暴雨警告信號": "https://www.hko.gov.hk/en/images/raina.gif",
+            "紅色暴雨警告信號": "https://www.hko.gov.hk/en/images/rainr.gif", "黑色暴雨警告信號": "https://www.hko.gov.hk/en/images/rainb.gif",
+            "山泥傾瀉警告": "https://www.hko.gov.hk/en/images/landslip.gif", "雷暴警告": "https://www.hko.gov.hk/en/images/ts.gif",
+            "黃色火災危險警告": "https://www.hko.gov.hk/en/images/firey.gif", "紅色火災危險警告": "https://www.hko.gov.hk/en/images/firer.gif",
+            "新界北部水浸特別報告": "https://www.hko.gov.hk/en/images/ntfl.gif", "寒冷天氣警告": "https://www.hko.gov.hk/en/images/cold.gif",
+            "酷熱天氣警告": "https://www.hko.gov.hk/en/images/vhot.gif", "霜凍警告": "https://www.hko.gov.hk/en/images/frost.gif"
         };
-
         async function loadWeather() {
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc')
                 .then(r => r.json())
                 .then(data => {
-                    let html = "";
-                    let topHtml = "";
-                    
+                    let html = "", topHtml = "";
                     if (data.details && data.details.length > 0) {
                         data.details.forEach(item => {
                             if (item.contents && item.contents.length > 0) {
                                 const title = item.contents[0];
-                                const detailsText = item.contents.slice(1).join('<br>');
-                                const updateTime = new Date(item.updateTime).toLocaleString('zh-HK');
-                                
                                 const matchedKey = Object.keys(warningIcons).find(key => title.includes(key));
-                                const iconUrl = matchedKey ? warningIcons[matchedKey] : null;
-                                
-                                if (iconUrl) {
-                                    topHtml += `<div class="warning-item bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${iconUrl}" class="w-12 h-12" title="${title}"></div>`;
-                                }
-
-                                const imgTag = iconUrl ? `<img src="${iconUrl}" class="inline-block w-8 mr-2" alt="${title}" onerror="this.style.display='none'">` : "";
-
-                                html += `
-                                    <div class="mb-4 pb-3 border-b border-slate-100 last:border-0 last:pb-0">
-                                        <div class="font-bold text-red-600 flex items-center">
-                                            ${imgTag} ${title}
-                                        </div>
-                                        <p class="text-xs text-slate-400 mt-0.5 mb-2">更新：${updateTime}</p>
-                                        <p class="text-slate-600 leading-relaxed text-xs">${detailsText}</p>
-                                    </div>
-                                `;
+                                if (matchedKey) topHtml += `<div class="bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${warningIcons[matchedKey]}" class="w-12 h-12" title="${title}"></div>`;
+                                html += `<div class="mb-4 pb-3 border-b border-slate-100"><p class="font-bold text-red-600">${title}</p></div>`;
                             }
                         });
                     }
                     document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
                     document.getElementById('top-right-warnings').innerHTML = topHtml;
-                })
-                .catch(err => {
-                    document.getElementById('warning-data').innerHTML = "無法讀取天氣警告資料。";
                 });
-
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc')
                 .then(r => r.json())
                 .then(data => {
                     document.getElementById('general-report').innerHTML = data.generalSituation;
-                    document.getElementById('forecast-report').innerHTML = `<strong>${data.forecastDesc}</strong><br><br>${data.outlook}`;
+                    document.getElementById('forecast-report').innerHTML = `<strong>${data.forecastDesc}</strong>`;
                 });
         }
         loadWeather();
