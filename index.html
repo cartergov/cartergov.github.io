@@ -16,13 +16,18 @@
         .card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .card-img { height: 260px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; }
         .card-img img, .card-img iframe { width: 100%; height: 100%; object-fit: contain; }
-        /* 確保右上角懸浮區最上層 */
-        #top-right-warnings { z-index: 9999 !important; }
+        
+        /* 手機版優化 */
+        #top-right-warnings { z-index: 9999; }
+        @media (max-width: 768px) {
+            #top-right-warnings { top: 10px; right: 10px; gap: 0.5rem; }
+            #top-right-warnings img { width: 35px; height: 35px; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 p-6">
 
-    <div id="top-right-warnings" class="fixed top-6 right-6 flex flex-col gap-3 pointer-events-auto"></div>
+    <div id="top-right-warnings" class="fixed top-4 right-4 flex flex-col gap-2 pointer-events-none"></div>
 
     <header class="mb-10 max-w-7xl mx-auto">
         <h1 class="text-4xl font-black tracking-tight text-slate-800 mb-2">熱帶氣旋整合資料庫</h1>
@@ -124,7 +129,7 @@
                                 const iconUrl = matchedKey ? warningIcons[matchedKey] : null;
                                 
                                 if (iconUrl) {
-                                    topHtml += `<div class="bg-white/90 p-2 rounded-xl shadow-lg border border-red-200"><img src="${iconUrl}" class="w-16 h-16" title="${title}"></div>`;
+                                    topHtml += `<div class="warning-item bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${iconUrl}" class="w-12 h-12" title="${title}"></div>`;
                                 }
 
                                 const imgTag = iconUrl ? `<img src="${iconUrl}" class="inline-block w-8 mr-2" alt="${title}" onerror="this.style.display='none'">` : "";
@@ -141,9 +146,7 @@
                             }
                         });
                     }
-                    
                     document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
-                    // 若有訊號則顯示，無訊號時清空避免佔位
                     document.getElementById('top-right-warnings').innerHTML = topHtml;
                 })
                 .catch(err => {
