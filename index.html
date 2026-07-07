@@ -40,7 +40,7 @@
             <div class="grid-3-cols mb-6">
                 <div class="card border-l-4 border-red-500">
                     <h3 class="font-bold text-lg text-red-600 mb-4">⚠️ 天氣警告</h3>
-                    <div id="warning-data" class="text-sm h-32 overflow-y-auto">讀取中...</div>
+                    <div id="warning-data" class="text-sm h-32 overflow-y-auto space-y-2">讀取中...</div>
                 </div>
                 <div class="card border-l-4 border-blue-500">
                     <h3 class="font-bold text-lg text-blue-800 mb-4">📝 本港天氣概況</h3>
@@ -62,10 +62,22 @@
 
         <section class="mb-10">
             <h2 class="text-xl font-bold mb-6 text-slate-700">氣象數值分析</h2>
+            
             <div class="grid-2-cols">
                 <div class="card"><h3 class="font-bold text-sm mb-2">西北太平洋衛星雲圖</h3><div class="card-img"><a href="https://v4.hkcoc.com/nwp.gif?v=44" target="_blank"><img src="https://v4.hkcoc.com/nwp.gif?v=44"></a></div></div>
                 <div class="card"><h3 class="font-bold text-sm mb-2">熱帶氣旋路徑 (TSR)</h3><div class="card-img"><a href="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png" target="_blank"><img src="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png"></a></div></div>
             </div>
+            
+            <div class="grid-1-cols mt-4">
+                <div class="card"><h3 class="font-bold text-sm mb-2">東亞風場圖</h3><div class="card-img"><a href="https://www.hkww.org/weather/ascata.png" target="_blank"><img src="https://www.hkww.org/weather/ascata.png"></a></div></div>
+            </div>
+
+            <div class="grid-3-cols mt-4">
+                <div class="card"><h3 class="font-bold text-xs mb-2">東亞海水溫度</h3><div class="card-img"><a href="https://www.oceanweather.com/data/NPAC-Western/SST.GIF" target="_blank"><img src="https://www.oceanweather.com/data/NPAC-Western/SST.GIF"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">南中國海海水溫度</h3><div class="card-img"><a href="https://www.oceanweather.com/data/South-China-Sea/SST.GIF" target="_blank"><img src="https://www.oceanweather.com/data/South-China-Sea/SST.GIF"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">全球海水溫度</h3><div class="card-img"><a href="https://www.ssec.wisc.edu/data/sst/latest_sst.gif" target="_blank"><img src="https://www.ssec.wisc.edu/data/sst/latest_sst.gif"></a></div></div>
+            </div>
+
             <div class="grid-3-cols mt-4">
                 <div class="card"><h3 class="font-bold text-xs mb-2">衛星影像色調強化</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF"></a></div></div>
                 <div class="card"><h3 class="font-bold text-xs mb-2">水氣圖</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg"></a></div></div>
@@ -89,6 +101,7 @@
 
     <script>
         document.getElementById('datetime').innerText = new Date().toLocaleString();
+        
         const warningIcons = {
             "一號戒備信號": "https://www.hko.gov.hk/en/images/tc1.gif", "三號強風信號": "https://www.hko.gov.hk/en/images/tc3.gif",
             "八號東南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8se.gif", "八號東北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8ne.gif",
@@ -101,6 +114,7 @@
             "新界北部水浸特別報告": "https://www.hko.gov.hk/en/images/ntfl.gif", "寒冷天氣警告": "https://www.hko.gov.hk/en/images/cold.gif",
             "酷熱天氣警告": "https://www.hko.gov.hk/en/images/vhot.gif", "霜凍警告": "https://www.hko.gov.hk/en/images/frost.gif"
         };
+
         async function loadWeather() {
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc')
                 .then(r => r.json())
@@ -111,18 +125,21 @@
                             if (item.contents && item.contents.length > 0) {
                                 const title = item.contents[0];
                                 const matchedKey = Object.keys(warningIcons).find(key => title.includes(key));
-                                if (matchedKey) {
-                                    topHtml += `<div class="bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${warningIcons[matchedKey]}" class="w-12 h-12" title="${title}"></div>`;
-                                    html += `<div class="mb-4 pb-3 border-b border-slate-100 flex items-center"><img src="${warningIcons[matchedKey]}" class="w-8 h-8 mr-3"><p class="font-bold text-red-600">${title}</p></div>`;
-                                } else {
-                                    html += `<div class="mb-4 pb-3 border-b border-slate-100"><p class="font-bold text-red-600">${title}</p></div>`;
+                                const iconUrl = matchedKey ? warningIcons[matchedKey] : null;
+                                
+                                if (iconUrl) {
+                                    topHtml += `<div class="bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${iconUrl}" class="w-12 h-12" title="${title}"></div>`;
                                 }
+                                
+                                const imgTag = iconUrl ? `<img src="${iconUrl}" class="w-6 h-6 inline mr-2" title="${title}">` : "";
+                                html += `<div class="mb-2 pb-2 border-b border-slate-100 flex items-center">${imgTag} <span class="font-bold text-red-600">${title}</span></div>`;
                             }
                         });
                     }
                     document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
                     document.getElementById('top-right-warnings').innerHTML = topHtml;
                 });
+
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc')
                 .then(r => r.json())
                 .then(data => {
