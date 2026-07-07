@@ -16,9 +16,13 @@
         .card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .card-img { height: 260px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 12px; }
         .card-img img, .card-img iframe { width: 100%; height: 100%; object-fit: contain; }
+        /* 確保右上角懸浮區最上層 */
+        #top-right-warnings { z-index: 9999 !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 p-6">
+
+    <div id="top-right-warnings" class="fixed top-6 right-6 flex flex-col gap-3 pointer-events-auto"></div>
 
     <header class="mb-10 max-w-7xl mx-auto">
         <h1 class="text-4xl font-black tracking-tight text-slate-800 mb-2">熱帶氣旋整合資料庫</h1>
@@ -50,8 +54,8 @@
             </div>
 
             <div class="grid-3-cols">
-                <div class="card"><h3 class="font-bold mb-3 text-sm">雷達影像</h3><div class="card-img"><img src="https://www.weather.gov.hk/content_elements_v2/images/radar/front_R1.jpg"></div></div>
-                <div class="card"><h3 class="font-bold mb-3 text-sm">全港平均風向及風速</h3><div class="card-img"><img src="https://www.hko.gov.hk/wxinfo/ts/windchk.png"></div></div>
+                <div class="card"><h3 class="font-bold mb-3 text-sm">雷達影像</h3><div class="card-img"><a href="https://www.weather.gov.hk/content_elements_v2/images/radar/front_R1.jpg" target="_blank"><img src="https://www.weather.gov.hk/content_elements_v2/images/radar/front_R1.jpg"></a></div></div>
+                <div class="card"><h3 class="font-bold mb-3 text-sm">全港平均風向及風速</h3><div class="card-img"><a href="https://www.hko.gov.hk/wxinfo/ts/windchk.png" target="_blank"><img src="https://www.hko.gov.hk/wxinfo/ts/windchk.png"></a></div></div>
                 <div class="card"><h3 class="font-bold mb-3 text-sm">香港風力指數</h3><div class="card-img"><iframe src="https://v4.hkcoc.com/windindex/" class="border-0"></iframe></div></div>
             </div>
         </section>
@@ -59,49 +63,88 @@
         <section>
             <h2 class="text-xl font-bold mb-6 text-slate-700">氣象數值分析</h2>
             <div class="grid-2-cols">
-                <div class="card"><h3 class="font-bold text-sm mb-2">西北太平洋衛星雲圖</h3><div class="card-img"><img src="https://v4.hkcoc.com/nwp.gif?v=44"></div></div>
-                <div class="card"><h3 class="font-bold text-sm mb-2">熱帶氣旋路徑 (TSR)</h3><div class="card-img"><img src="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png"></div></div>
+                <div class="card"><h3 class="font-bold text-sm mb-2">西北太平洋衛星雲圖</h3><div class="card-img"><a href="https://v4.hkcoc.com/nwp.gif?v=44" target="_blank"><img src="https://v4.hkcoc.com/nwp.gif?v=44"></a></div></div>
+                <div class="card"><h3 class="font-bold text-sm mb-2">熱帶氣旋路徑 (TSR)</h3><div class="card-img"><a href="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png" target="_blank"><img src="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png"></a></div></div>
             </div>
             <div class="grid-3-cols mt-4">
-                <div class="card"><h3 class="font-bold text-xs mb-2">衛星影像色調強化</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">水氣圖</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">駛流平均</h3><div class="card-img"><img src="http://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmsdlm4.GIF"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">垂直風切變</h3><div class="card-img"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmswxc.GIF"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">地面氣溫圖</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sftt_c_00.png"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">海平面風場及濕度</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sfrh_c_00.png"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">850hPa 渦場分析</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up85vt_c_00.png"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">500hPa 位勢高度</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up50hh_c_00.png"></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">200hPa 流線及急流</h3><div class="card-img"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up20is_c_00.png"></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">衛星影像色調強化</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">水氣圖</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">駛流平均</h3><div class="card-img"><a href="http://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmsdlm4.GIF" target="_blank"><img src="http://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmsdlm4.GIF"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">垂直風切變</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmswxc.GIF" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/winds/wgmswxc.GIF"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">地面氣溫圖</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/sftt_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sftt_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">海平面風場及濕度</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/sfrh_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/sfrh_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">850hPa 渦場分析</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/up85vt_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up85vt_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">500hPa 位勢高度</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/up50hh_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up50hh_c_00.png"></a></div></div>
+                <div class="card"><h3 class="font-bold text-xs mb-2">200hPa 流線及急流</h3><div class="card-img"><a href="https://www.weather.gov.hk/nhm/img/nhmmap/up20is_c_00.png" target="_blank"><img src="https://www.weather.gov.hk/nhm/img/nhmmap/up20is_c_00.png"></a></div></div>
             </div>
         </section>
     </main>
 
     <script>
         document.getElementById('datetime').innerText = new Date().toLocaleString();
+        
+        const warningIcons = {
+            "一號戒備信號": "https://www.hko.gov.hk/en/images/tc1.gif",
+            "三號強風信號": "https://www.hko.gov.hk/en/images/tc3.gif",
+            "八號東南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8se.gif",
+            "八號東北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8ne.gif",
+            "八號西南烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8sw.gif",
+            "八號西北烈風或暴風信號": "https://www.hko.gov.hk/en/images/tc8nw.gif",
+            "九號烈風或暴風風力增強信號": "https://www.hko.gov.hk/en/images/tc9.gif",
+            "十號颶風信號": "https://www.hko.gov.hk/en/images/tc10.gif",
+            "強烈季候風信號": "https://www.hko.gov.hk/en/images/sms.gif",
+            "黃色暴雨警告信號": "https://www.hko.gov.hk/en/images/raina.gif",
+            "紅色暴雨警告信號": "https://www.hko.gov.hk/en/images/rainr.gif",
+            "黑色暴雨警告信號": "https://www.hko.gov.hk/en/images/rainb.gif",
+            "山泥傾瀉警告": "https://www.hko.gov.hk/en/images/landslip.gif",
+            "雷暴警告": "https://www.hko.gov.hk/en/images/ts.gif",
+            "黃色火災危險警告": "https://www.hko.gov.hk/en/images/firey.gif",
+            "紅色火災危險警告": "https://www.hko.gov.hk/en/images/firer.gif",
+            "新界北部水浸特別報告": "https://www.hko.gov.hk/en/images/ntfl.gif",
+            "寒冷天氣警告": "https://www.hko.gov.hk/en/images/cold.gif",
+            "酷熱天氣警告": "https://www.hko.gov.hk/en/images/vhot.gif",
+            "霜凍警告": "https://www.hko.gov.hk/en/images/frost.gif"
+        };
+
         async function loadWeather() {
-            // 已更新為 warningInfo API 以獲取詳細警告文字與生效/更新時間
             fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warningInfo&lang=tc')
                 .then(r => r.json())
                 .then(data => {
                     let html = "";
+                    let topHtml = "";
+                    
                     if (data.details && data.details.length > 0) {
                         data.details.forEach(item => {
                             if (item.contents && item.contents.length > 0) {
-                                const title = item.contents[0]; // 警告名稱
-                                const detailsText = item.contents.slice(1).join('<br>'); // 詳細內容及時間說明
-                                const updateTime = new Date(item.updateTime).toLocaleString('zh-HK'); // 系統更新時間
+                                const title = item.contents[0];
+                                const detailsText = item.contents.slice(1).join('<br>');
+                                const updateTime = new Date(item.updateTime).toLocaleString('zh-HK');
                                 
+                                const matchedKey = Object.keys(warningIcons).find(key => title.includes(key));
+                                const iconUrl = matchedKey ? warningIcons[matchedKey] : null;
+                                
+                                if (iconUrl) {
+                                    topHtml += `<div class="bg-white/90 p-2 rounded-xl shadow-lg border border-red-200"><img src="${iconUrl}" class="w-16 h-16" title="${title}"></div>`;
+                                }
+
+                                const imgTag = iconUrl ? `<img src="${iconUrl}" class="inline-block w-8 mr-2" alt="${title}" onerror="this.style.display='none'">` : "";
+
                                 html += `
                                     <div class="mb-4 pb-3 border-b border-slate-100 last:border-0 last:pb-0">
-                                        <p class="font-bold text-red-600 flex items-center gap-1">🔴 ${title}</p>
-                                        <p class="text-xs text-slate-400 mt-0.5 mb-2">系統更新時間：${updateTime}</p>
+                                        <div class="font-bold text-red-600 flex items-center">
+                                            ${imgTag} ${title}
+                                        </div>
+                                        <p class="text-xs text-slate-400 mt-0.5 mb-2">更新：${updateTime}</p>
                                         <p class="text-slate-600 leading-relaxed text-xs">${detailsText}</p>
                                     </div>
                                 `;
                             }
                         });
                     }
+                    
                     document.getElementById('warning-data').innerHTML = html || "目前沒有生效天氣警告。";
+                    // 若有訊號則顯示，無訊號時清空避免佔位
+                    document.getElementById('top-right-warnings').innerHTML = topHtml;
                 })
                 .catch(err => {
                     document.getElementById('warning-data').innerHTML = "無法讀取天氣警告資料。";
