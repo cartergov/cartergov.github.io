@@ -62,26 +62,10 @@
 
         <section class="mb-10">
             <h2 class="text-xl font-bold mb-6 text-slate-700">氣象數值分析</h2>
-            
-            <!-- 第一排 -->
             <div class="grid-2-cols">
                 <div class="card"><h3 class="font-bold text-sm mb-2">西北太平洋衛星雲圖</h3><div class="card-img"><a href="https://v4.hkcoc.com/nwp.gif?v=44" target="_blank"><img src="https://v4.hkcoc.com/nwp.gif?v=44"></a></div></div>
                 <div class="card"><h3 class="font-bold text-sm mb-2">熱帶氣旋路徑 (TSR)</h3><div class="card-img"><a href="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png" target="_blank"><img src="https://www.tropicalstormrisk.com/tracker/dynamic/images/W.png"></a></div></div>
             </div>
-
-            <!-- 第二排 -->
-            <div class="grid-1-cols mt-4">
-                <div class="card"><h3 class="font-bold text-sm mb-2">東亞風場圖</h3><div class="card-img"><a href="https://www.hkww.org/weather/ascata.png" target="_blank"><img src="https://www.hkww.org/weather/ascata.png"></a></div></div>
-            </div>
-
-            <!-- 第三排 -->
-            <div class="grid-3-cols mt-4">
-                <div class="card"><h3 class="font-bold text-xs mb-2">東亞海水溫度</h3><div class="card-img"><a href="https://www.oceanweather.com/data/NPAC-Western/SST.GIF" target="_blank"><img src="https://www.oceanweather.com/data/NPAC-Western/SST.GIF"></a></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">南中國海海水溫度</h3><div class="card-img"><a href="https://www.oceanweather.com/data/South-China-Sea/SST.GIF" target="_blank"><img src="https://www.oceanweather.com/data/South-China-Sea/SST.GIF"></a></div></div>
-                <div class="card"><h3 class="font-bold text-xs mb-2">全球海水溫度</h3><div class="card-img"><a href="https://www.ssec.wisc.edu/data/sst/latest_sst.gif" target="_blank"><img src="https://www.ssec.wisc.edu/data/sst/latest_sst.gif"></a></div></div>
-            </div>
-
-            <!-- 第四排 (原有分析) -->
             <div class="grid-3-cols mt-4">
                 <div class="card"><h3 class="font-bold text-xs mb-2">衛星影像色調強化</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/irngms.GIF"></a></div></div>
                 <div class="card"><h3 class="font-bold text-xs mb-2">水氣圖</h3><div class="card-img"><a href="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg" target="_blank"><img src="https://tropic.ssec.wisc.edu/real-time/westpac/images/xxwvgmsbbm.jpg"></a></div></div>
@@ -127,8 +111,12 @@
                             if (item.contents && item.contents.length > 0) {
                                 const title = item.contents[0];
                                 const matchedKey = Object.keys(warningIcons).find(key => title.includes(key));
-                                if (matchedKey) topHtml += `<div class="bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${warningIcons[matchedKey]}" class="w-12 h-12" title="${title}"></div>`;
-                                html += `<div class="mb-4 pb-3 border-b border-slate-100"><p class="font-bold text-red-600">${title}</p></div>`;
+                                if (matchedKey) {
+                                    topHtml += `<div class="bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-red-100 pointer-events-auto"><img src="${warningIcons[matchedKey]}" class="w-12 h-12" title="${title}"></div>`;
+                                    html += `<div class="mb-4 pb-3 border-b border-slate-100 flex items-center"><img src="${warningIcons[matchedKey]}" class="w-8 h-8 mr-3"><p class="font-bold text-red-600">${title}</p></div>`;
+                                } else {
+                                    html += `<div class="mb-4 pb-3 border-b border-slate-100"><p class="font-bold text-red-600">${title}</p></div>`;
+                                }
                             }
                         });
                     }
